@@ -3,7 +3,8 @@ const logisticsRouter = new Router();
 
 const logisticsController = require('../../controllers/logistics/logisticsController');
 
-logisticsRouter.get('/logistics/...', logisticsController /*.method */);
+logisticsRouter.get('/logistics/create-api', logisticsController.createApi);
+
 
 
 
