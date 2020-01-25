@@ -5,9 +5,11 @@ const app = new Koa();
 const bodyParser = require('koa-bodyparser');
 const cors = require('@koa/cors');
 
+require('./db/mongodb/mongodb');
+
 if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 
-const router = require('./router');
+
 
 app.use(bodyParser());
 app.use(cors());
