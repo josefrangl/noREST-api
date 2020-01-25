@@ -1,13 +1,15 @@
-// MERGE ALL ROUTES
-
 const Router = require('koa-router');
 const apiRouter = new Router();
 
-const controller = require('../../controllers/api/api_controller');
+const apiController = require('../../controllers/api/apiController');
 
-apiRouter.get('/api/:api_name/', controller.get);
+// basic (mvp) routes
+apiRouter.get('/api/:api_name',);
+apiRouter.get('/api/:api_name/:field/:value',);
+apiRouter.post('/api/:api_name',);
+apiRouter.put('/api/:api_name/:id',);
+apiRouter.delete('/api/:api_name/:id',);
 
 
-
-module.exports = apiRouter.routes();
+module.exports = apiRouter;
   
