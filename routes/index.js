@@ -10,4 +10,11 @@ const router = combineRouters(
   webappRouter
 );
 
+const  _404 = 'The requested URL was not found on this server.';
+
+router.get('/*', () => {
+  this.body = _404;
+  this.status = 404;
+});
+
 module.exports = router;
