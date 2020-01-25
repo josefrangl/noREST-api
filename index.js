@@ -13,7 +13,7 @@ require('./db/mongodb/mongodb');
 
 app.use(bodyParser());
 app.use(cors());
-app.use(router.routes());
+app.use(router());
 
 const PORT = process.env.PORT || 3000;
 
