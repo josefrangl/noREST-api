@@ -1,3 +1,15 @@
+// To install redis:
+// $ brew install redis
+
+// To start up with redis server:
+// $ brew services start redis
+
+// To check if the server is connected do:
+// $ redis-cli ping     --> it should reply with PONG if the connection goes through
+
+// In another terminal if you want to open a redis connection:
+// $ redis-cli
+
 const redis = require('redis');
 const { promisify } = require('util')
 
