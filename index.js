@@ -1,4 +1,5 @@
 'use strict';
+if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 
 const Koa = require('koa');
 const app = new Koa();
@@ -6,9 +7,9 @@ const app = new Koa();
 const bodyParser = require('koa-bodyparser');
 const cors = require('@koa/cors');
 
-if (process.env.NODE_ENV !== 'production') require('dotenv').config();
-
 const router = require('./routes/index');
+
+require('./db/mongodb/mongodb');
 
 app.use(bodyParser());
 app.use(cors());
