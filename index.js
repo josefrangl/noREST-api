@@ -9,6 +9,8 @@ if (process.env.NODE_ENV !== 'production') require('dotenv').config();
 
 const router = require('./router');
 
+require('./db/redis/redis');
+
 app.use(bodyParser());
 app.use(cors());
 app.use(router.routes());
