@@ -1,10 +1,10 @@
 const combineRouters = require('koa-combine-routers');
 const Router = require('koa-router');
-const defaultRouter = new Router();
+const catchAllRouter = new Router();
 
-const  _404 = 'The requested URL was not found on this server.';
+const  _404 = 'The requested URL was not found on the noREST server.';
 
-defaultRouter.get('/*', () => {
+catchAllRouter.all('/*', () => {
   this.body = _404;
   this.status = 404;
 });
@@ -14,12 +14,11 @@ const logisticsRouter = require('./logistics/logisticsRouter');
 const webappRouter = require('./webapp/webappRouter');
 
 const router = combineRouters(
-  defaultRouter,
   apiRouter,
   logisticsRouter,
-  webappRouter
+  webappRouter,
+  catchAllRouter
 );
-
 
 
 module.exports = router;

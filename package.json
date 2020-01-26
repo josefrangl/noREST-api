@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "devstart": "npx nodemon --ignore models/api --ignore test/"
   },
   "repository": {
     "type": "git",
@@ -19,11 +20,13 @@
   "dependencies": {
     "@koa/cors": "^3.0.0",
     "dotenv": "^8.2.0",
+    "file-system": "^2.2.2",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
     "koa-router": "^8.0.6",
     "redis": "^2.8.0",
     "koa-combine-routers": "^4.0.2",
-    "mongoose": "^5.8.9"
+    "mongoose": "^5.8.9",
+    "uuid": "^3.4.0"
   }
 }
