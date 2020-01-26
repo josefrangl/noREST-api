@@ -10,6 +10,7 @@ const cors = require('@koa/cors');
 const router = require('./routes/index');
 
 require('./db/mongodb/mongodb');
+require('./db/redis/redis');
 
 app.use(bodyParser());
 app.use(cors());
