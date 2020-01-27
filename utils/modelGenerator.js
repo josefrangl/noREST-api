@@ -13,7 +13,7 @@ exports.createModel = async (data) =>  {
   let txtMiddleModel = '';
 
   data.api.fields.forEach(elem => {
-    txtMiddleModel += 
+    txtMiddleModel +=
       `\t${elem.field_name}: {
         type: ${elem.field_type},
         allowNull: ${elem.allow_null},
