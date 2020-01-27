@@ -9,11 +9,7 @@ const authenticateAccess = async (ctx, next) => {
     ctx.body = `There is no api with the name: ${apiName}.`;
     ctx.status = 200;
   } else {
-    const apiArray = api.split(':')
-    const public = apiArray[0];
-    const apiKey = apiArray[1];
-    const apiSecretKey = apiArray[2];
-    console.log('staus', public);
+    const [public, apiKey, apiSecretKey] = api.split(':');
     if (public === 'true' && ctx.request.method === 'GET') {
       await next();
     } else if (public === 'false' && ctx.request.headers[apiKey] === apiSecretKey) {
