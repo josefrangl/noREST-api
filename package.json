@@ -19,14 +19,16 @@
   "homepage": "https://github.com/josefrangl/NoREST-backend#readme",
   "dependencies": {
     "@koa/cors": "^3.0.0",
+    "bcrypt": "^3.0.7",
     "dotenv": "^8.2.0",
     "file-system": "^2.2.2",
+    "jsonwebtoken": "^8.5.1",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.2.1",
-    "koa-router": "^8.0.6",
-    "redis": "^2.8.0",
     "koa-combine-routers": "^4.0.2",
+    "koa-router": "^8.0.6",
     "mongoose": "^5.8.9",
+    "redis": "^2.8.0",
     "uuid": "^3.4.0"
   }
 }
