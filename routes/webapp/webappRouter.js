@@ -3,8 +3,8 @@ const webappRouter = new Router();
 
 const webappController = require('../../controllers/webapp/webappController');
 
-webappRouter.get('/webapp/signup', webappController.signup);
-webappRouter.get('/webapp/login', webappController.login);
+webappRouter.post('/webapp/signup', webappController.signup);
+webappRouter.post('/webapp/login', webappController.login);
 
 
 
