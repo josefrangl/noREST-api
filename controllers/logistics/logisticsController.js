@@ -8,6 +8,23 @@ const redis = require('../../db/redis/redis');
 
 const redisPrefix = 'api-';
 
+exports.verifyApiName = async ctx => {
+  const data = ctx.request.body;
+  console.log(data.name)
+  if (!data.name) {
+    ctx.body = 'Please send an api name.'
+    return ctx.satus = 400;
+  }
+  const exists = await redis.get(redisPrefix + data.name);
+  if (exists) {
+    ctx.body = 'An api with this name already exists';
+    ctx.status = 202;
+  } else if (!exists) {
+    ctx.body = 'Good to go!';
+    ctx.status = 200;
+  }
+}
+
 
 exports.createApi = async ctx => {
 
@@ -27,6 +44,7 @@ exports.createApi = async ctx => {
       ctx.status = 202;
     } else {
       const redisApi = redis.set(redisPrefix + data.api.name, `${apiKey}:${apiSecretKey}`);
+      console.log(redisApi);
       const api = await ApiModel.create({
         api_name: data.api.name,
         description: data.api.description,
@@ -60,13 +78,14 @@ exports.adminGetAllApi = async ctx => {
 exports.getApi = async ctx => {
   apiName = ctx.params.api_name;
   try {
-    const api = await ApiModel.findOne({ api_name: apiName });
-    if (api) {
-      ctx.status = 200;
-      ctx.body = api;
-    } else {
+    const exists = await redis.get(redisPrefix + data.api.name);
+    if (!exists) {
       ctx.body = 'No APIs found with that name.';
       ctx.status = 204;
+    } else {
+      const api = await ApiModel.findOne({ api_name: apiName });
+      ctx.status = 200;
+      ctx.body = api;
     }
   } catch (error) {
     console.log('Error fetching API: ', error);
@@ -96,6 +115,7 @@ exports.getUserApis = async ctx => {
 exports.deleteApi = async ctx => {
   apiName = ctx.params.api_name;
   try {
+    const redisDelete = await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
     if (api) {
       ctx.body = api;

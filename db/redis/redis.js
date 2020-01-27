@@ -23,6 +23,7 @@ const db = {
   get: promisify(client.get).bind(client),
   set: promisify(client.set).bind(client),
   exists: promisify(client.exists).bind(client),
+  delete: promisify(client.del).bind(client),
 }
 
 module.exports = db;
