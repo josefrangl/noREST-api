@@ -43,12 +43,13 @@ exports.createApi = async ctx => {
       ctx.body = 'An api with this name already exists';
       ctx.status = 202;
     } else {
-      const redisApi = await redis.set(redisPrefix + data.api.name, `${apiKey}:${apiSecretKey}`);
+      const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
         const api = await ApiModel.create({
           api_name: data.api.name,
           description: data.api.description,
           user: data.user.id,
+          public: data.api.public,
           api_key: apiKey,
           api_secret_key: apiSecretKey
         });
