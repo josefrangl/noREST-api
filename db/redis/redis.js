@@ -19,6 +19,7 @@ client.on('connect', () => {
   console.log('Redis is connected!! 💾');
 })
 
+
 const db = {
   get: promisify(client.get).bind(client),
   set: promisify(client.set).bind(client),
@@ -27,3 +28,12 @@ const db = {
 }
 
 module.exports = db;
+
+
+// redis does not use models, but for reference, the data we are saving is in the format:
+
+//  key : value
+
+//  api-<api_name> : <api_key>:<secret_api_key> 
+
+//  user-<email> : hashed_password
