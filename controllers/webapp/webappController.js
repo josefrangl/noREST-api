@@ -59,9 +59,3 @@ module.exports = {
   signup,
   login
 }
-
-// const exists = await redis.get(redisPrefix + data.api.name);
-// if (exists) {
-//   ctx.body = 'An api with this name already exists';
-//   ctx.status = 202;
-// }
