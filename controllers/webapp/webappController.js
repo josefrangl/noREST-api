@@ -12,8 +12,10 @@ const signup = async (ctx) => {
 
   try {
     const user = await redis.get(redisPrefix + email);
-    if (user) ctx.body = 'This email is already registered.'
-    else {
+    if (user) {
+      ctx.body = 'This email is already registered.'; // be less sepcific
+      ctx.status = 202;
+    } else {
       const redisUser = await redis.set(redisPrefix + email, hash);
       const newUser = await userModel.create({
         email: email,
@@ -34,8 +36,10 @@ const login = async (ctx) => {
   const { email, password } = ctx.request.body;
   try {
     const user = await redis.exists(redisPrefix + email);
-    if (!user) ctx.body = 'This email has not been registered';
-    else {
+    if (!user) {
+      ctx.body = 'This email has not been registered';
+      ctx.status = 202;
+    } else {
       const hash = await redis.get(redisPrefix + email);
       const valid = await bcrypt.compare(password, hash);
       if (!valid) ctx.body = 'Incorrect password.'
@@ -55,3 +59,9 @@ module.exports = {
   signup,
   login
 }
+
+// const exists = await redis.get(redisPrefix + data.api.name);
+// if (exists) {
+//   ctx.body = 'An api with this name already exists';
+//   ctx.status = 202;
+// }
