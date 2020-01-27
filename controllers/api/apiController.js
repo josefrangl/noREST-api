@@ -61,12 +61,12 @@ exports.updateRecord = async ctx => {
   const model = require(`../../models/api/${apiName}Model.js`);
 
   try {
-    const result = await model.findOneAndUpdate({ _id: recordId}, data);
+    const result = await model.findOneAndUpdate({ _id: recordId }, data);
     if (result) {
       ctx.body = result;
       ctx.status = 200;
     } else {
-      ctx.body ='ID not found.';
+      ctx.body = 'ID not found.';
       ctx.status = 404;
     }
   } catch (error) {

@@ -29,7 +29,7 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  const result = await createModel(data);
+
 
   // generate access keys (To be model)
   const apiKey = uuidv1();
@@ -43,6 +43,8 @@ exports.createApi = async ctx => {
       ctx.body = 'An api with this name already exists';
       ctx.status = 202;
     } else {
+      console.log(data);
+      const result = await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
         const api = await ApiModel.create({
