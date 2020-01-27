@@ -1,7 +1,7 @@
 const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
 
-const createModel = require('../../utils/modelGenerators').createModel;
+const createModel = require('../../utils/modelGenerator').createModel;
 
 const ApiModel = require('../../models/logistics/logisticsModel');
 const redis = require('../../db/redis/redis');
