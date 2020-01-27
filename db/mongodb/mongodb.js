@@ -17,12 +17,9 @@ Using Homebrew:
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-const base_url = process.env.MONGODB_URL || 'mongodb://localhost:27017/';
-const dbName = process.env.MONGODB_NAME || 'norest';
-
-const url = `${base_url}${dbName}`;
+const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/norest';
 
 mongoose.connect(url, { useNewUrlParser: true , useUnifiedTopology: true});
-mongoose.connection.once('open', () => console.log(`Connected to mongo at ${url}`));
+mongoose.connection.once('open', () => console.log(`🦌 Connected to mongo at ${url}`));
 
 module.exports = mongoose;

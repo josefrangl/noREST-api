@@ -13,10 +13,13 @@
 const redis = require('redis');
 const { promisify } = require('util')
 
-const client = redis.createClient();
+
+const redisUrl = process.env.REDIS_URL || '';
+
+const client = redis.createClient(redisUrl);
 
 client.on('connect', () => {
-  console.log('Redis is connected!! 💾');
+  console.log('💾 Redis is connected!!');
 })
 
 
