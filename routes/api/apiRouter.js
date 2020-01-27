@@ -13,21 +13,3 @@ apiRouter.delete('/api/:api_name/:id', authMiddleware, apiController.deleteRecor
 
 
 module.exports = apiRouter;
-
-// create middleware folder and file then put as an argument in the function the controller;
-
-// check using redis if the api is public or private;
-//   if (public) {
-//     if (method === get) {
-//       can pass;
-//     } else {
-//       can NOT pass;
-//     }
-//   } else if (private) {
-//     if (authorization headers are correct) {
-//       can pass;
-//     } else {
-//       can NOT pass;
-//     }
-//   }
-
