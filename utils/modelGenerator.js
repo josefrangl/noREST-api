@@ -25,7 +25,7 @@ exports.createModel = async (data) =>  {
   const txtExportModule = `module.exports = ${modelName};`;
 
   const model = txtImportMongoose + txtBeginModel + txtMiddleModel + txtEndModel + txtExportModule;
-  const modelPath = __dirname + `/../../models/api/${apiName}Model.js`;
+  const modelPath = `models/api/${apiName}Model.js`;
 
   writeFileAsync(modelPath, model, 'utf8', err => {
     if (err) console.log('error creating model file: ', err);
