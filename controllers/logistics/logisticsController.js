@@ -43,18 +43,19 @@ exports.createApi = async ctx => {
       ctx.body = 'An api with this name already exists';
       ctx.status = 202;
     } else {
-      const redisApi = redis.set(redisPrefix + data.api.name, `${apiKey}:${apiSecretKey}`);
-      console.log(redisApi);
-      const api = await ApiModel.create({
-        api_name: data.api.name,
-        description: data.api.description,
-        user: data.user.id,
-        api_key: apiKey,
-        api_secret_key: apiSecretKey
-      });
+      const redisApi = await redis.set(redisPrefix + data.api.name, `${apiKey}:${apiSecretKey}`);
+      if (redisApi) {
+        const api = await ApiModel.create({
+          api_name: data.api.name,
+          description: data.api.description,
+          user: data.user.id,
+          api_key: apiKey,
+          api_secret_key: apiSecretKey
+        });
 
-      ctx.body = api;
-      ctx.status = 201;
+        ctx.body = api;
+        ctx.status = 201;
+      }
     }
 
   } catch (error) {
@@ -78,10 +79,11 @@ exports.adminGetAllApi = async ctx => {
 exports.getApi = async ctx => {
   apiName = ctx.params.api_name;
   try {
-    const exists = await redis.get(redisPrefix + data.api.name);
+    const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
+      console.log(apiName)
       ctx.body = 'No APIs found with that name.';
-      ctx.status = 204;
+      ctx.status = 200;
     } else {
       const api = await ApiModel.findOne({ api_name: apiName });
       ctx.status = 200;
