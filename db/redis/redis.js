@@ -22,8 +22,7 @@ client.on('connect', () => {
 const db = {
   get: promisify(client.get).bind(client),
   set: promisify(client.set).bind(client),
-  hget: promisify(client.hget).bind(client),
-  hset: promisify(client.hset).bind(client),
+  exists: promisify(client.exists).bind(client),
 }
 
 module.exports = db;
