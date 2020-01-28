@@ -6,7 +6,7 @@ const redis = require('../../db/redis/redis');
 const redisPrefix = 'user-';
 
 const signup = async (ctx) => {
-  const { email, password } = ctx.request.body;
+  const { name , email, password } = ctx.request.body;
   const saltRounds = 10; // move this to the env file
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
@@ -19,13 +19,15 @@ const signup = async (ctx) => {
       const redisUser = await redis.set(redisPrefix + email, hashPassword);
       if (redisUser) {
         const newUser = await userModel.create({
+          name: name,
           email: email,
           password: hashPassword
         });
 
         // Create JWT token
         const responseUser = {
-          email: newUser.email
+          email: newUser.email,
+          name: newUser.name
         }
         const token = createToken(responseUser);
         ctx.status = 201;
@@ -45,7 +47,7 @@ const signup = async (ctx) => {
 }
 
 const login = async (ctx) => {
-  const { email, password } = ctx.request.body;
+  const { name, email, password } = ctx.request.body;
   try {
     const user = await redis.exists(redisPrefix + email);
     if (!user) {
@@ -58,7 +60,8 @@ const login = async (ctx) => {
       else {
         // Create JWT token
         const responseUser = {
-          email
+          email,
+          name
         }
         const token = createToken(responseUser);
         ctx.body = {token}; // Test handlebars
