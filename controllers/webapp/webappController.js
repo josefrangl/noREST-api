@@ -26,6 +26,7 @@ const signup = async (ctx) => {
 
         // Create JWT token
         const responseUser = {
+          id: newUser._id,
           email: newUser.email,
           name: newUser.name
         }
@@ -59,12 +60,14 @@ const login = async (ctx) => {
       if (!valid) ctx.body = 'Incorrect password.'
       else {
         // Create JWT token
+        const mongoUser = await userModel.find({email: email})
         const responseUser = {
           email,
-          name
+          name,
+          id: mongoUser._id
         }
         const token = createToken(responseUser);
-        ctx.body = {token}; // Test handlebars
+        ctx.body = {token};
         ctx.status = 200;
       }
     }
