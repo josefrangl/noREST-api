@@ -2,7 +2,6 @@ const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
 const fs = require('fs');
 const { promisify } = require('util');
-const existsFileAsync = promisify(fs.existsSync);
 const renameFileAsync = promisify(fs.rename);
 
 const createModel = require('../../utils/modelGenerator').createModel;
@@ -12,24 +11,29 @@ const redis = require('../../db/redis/redis');
 
 const redisPrefix = 'api-';
 
-const forbiddenNames = ['api', 'apis', 'user', 'users'];
+const forbiddenNames = ['api', 'apis', 'user', 'users', 'break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'finally', 'for', 'function', 'if', 'in', 'instanceof', 'new', 'return', 'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'NAN'];
 
 exports.verifyApiName = async ctx => {
   const data = ctx.request.body;
-  console.log(data.name)
+
+  let pluralExists;
+
   if (!data.name) {
     ctx.body = 'Please send an api name.'
     return ctx.satus = 400;
-  } else if (forbiddenNames.includes(data.name)) {
+  } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) {
     ctx.body = 'Please choose a valid name for your api.'
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
-  if (exists) {
+  if (data.name[data.name.length - 1] === 's') {
+    pluralExists = await redis.get(redisPrefix + data.name.slice(-1));
+  }
+  if (exists || pluralExists) {
     ctx.body = 'An api with this name already exists';
     ctx.status = 202;
   } else if (!exists) {
-    ctx.body = 'Good to go!';
+    ctx.body = data.name;
     ctx.status = 200;
   }
 }
@@ -47,11 +51,16 @@ exports.createApi = async ctx => {
   const apiKey = uuidv1();
   const apiSecretKey = crypto.randomBytes(32).toString('hex');
 
+  let pluralExists;
+
   try {
     const exists = await redis.get(redisPrefix + data.api.name);
-    if (exists) {
+    if (data.api.name[data.api.name.length - 1] === 's') {
+      pluralExists = await redis.get(redisPrefix + data.api.name.slice(0, -1));
+    }
+    if (exists || pluralExists) {
       ctx.body = 'An api with this name already exists.';
-      ctx.status = 202;
+      return ctx.status = 202;
     } else {
       const result = await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
