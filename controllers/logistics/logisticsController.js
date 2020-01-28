@@ -42,7 +42,7 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  if (!data.user.id || !data.api.name || !data.api.description || !data.api.public || data.api.fields.length < 1) {
+  if (!data.api.user || !data.api.name || !data.api.public || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
     return ctx.status = 200;
   }
@@ -68,7 +68,7 @@ exports.createApi = async ctx => {
         const api = await ApiModel.create({
           api_name: data.api.name,
           description: data.api.description,
-          user: data.user.id,
+          user: data.api.user,
           public: data.api.public,
           api_key: apiKey,
           api_secret_key: apiSecretKey
@@ -117,7 +117,8 @@ exports.getApi = async ctx => {
 };
 
 exports.getUserApis = async ctx => {
-  userId = ctx.params.user_id;
+  const userId = ctx.params.user_id;
+
   try {
     const userApis = await ApiModel.find({ user: userId });
     ctx.status = 200;
