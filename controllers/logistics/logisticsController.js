@@ -1,5 +1,9 @@
 const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
+const fs = require('fs');
+const { promisify } = require('util');
+const existsFileAsync = promisify(fs.existsSync);
+const renameFileAsync = promisify(fs.rename);
 
 const createModel = require('../../utils/modelGenerator').createModel;
 
@@ -34,6 +38,7 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
+  console.log(data);
 
   // generate access keys (To be model)
   const apiKey = uuidv1();
@@ -120,19 +125,23 @@ exports.getUserApis = async ctx => {
 };
 
 exports.updateApi = async ctx => {
-  //put int error handling
   const apiName = ctx.params.api_name;
   const data = ctx.request.body;
   let redisName = redisPrefix + apiName;
   const redisValue = await redis.get(redisName);
-  console.log('redisvalue: ', redisValue)
   const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
   try {
     if (data.api_name) {
+      const exists = await redis.get(redisPrefix + data.api_name);
+      if (exists) {
+        ctx.body = 'An api with this name already exists.'; // perhaps could validate this in the front end with the api/validate endpoint?
+        return ctx.status = 200;
+      }
       await redis.rename(redisPrefix + apiName, redisPrefix + data.api_name);
       redisName = redisPrefix + data.api_name;
+      await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`)
     }
-    if (data.public) await redis.set(redisName, `${data.public}:${oldApiKey}:${oldApiSecretKey}`);
+    if (data.hasOwnProperty('public')) await redis.set(redisName, `${data.public}:${oldApiKey}:${oldApiSecretKey}`);
     if (data.api_key) await redis.set(redisName, `${oldPublic}:${data.api_key}:${oldApiSecretKey}`);
     if (data.api_secret_key) await redis.set(redisName, `${oldPublic}:${oldApiKey}:${data.api_secret_key}`);
     const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, data, { new: true });
