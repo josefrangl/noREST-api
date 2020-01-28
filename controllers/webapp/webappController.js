@@ -23,14 +23,13 @@ const signup = async (ctx) => {
           password: hashPassword
         });
 
-        // make a jwt token out of their details
+        // Create JWT token
         const responseUser = {
           email: newUser.email
         }
-
         const token = createToken(responseUser);
         ctx.status = 201;
-        ctx.body = {token}; // Test handlebars
+        ctx.body = {token};
 
       } else {
         ctx.body = 'Could not set user in Redis';
@@ -57,7 +56,7 @@ const login = async (ctx) => {
       const valid = await bcrypt.compare(password, hashPassword);
       if (!valid) ctx.body = 'Incorrect password.'
       else {
-        // jwt their details
+        // Create JWT token
         const responseUser = {
           email
         }

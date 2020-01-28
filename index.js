@@ -11,8 +11,8 @@ const cors = require("@koa/cors");
 
 const jwtVerify = require("koa-jwt");
 var options = {
-  origin: "http://localhost:3001",
-  credentials: true
+  origin: "http://localhost:3001", // Info in .env, port may change
+  // credentials: true
 };
 app.use(cors(options));
 const router = require("./routes/index");
@@ -22,7 +22,7 @@ require("./db/redis/redis");
 
 app.use(
   jwtVerify({ secret: process.env.JWT_SECRET }).unless({
-    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z]/]
+    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z\d]+/]
   })
 ); // Test regex for APIs
 
