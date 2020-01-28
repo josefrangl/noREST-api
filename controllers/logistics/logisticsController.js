@@ -1,5 +1,9 @@
 const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
+const fs = require('fs');
+const { promisify } = require('util');
+const existsFileAsync = promisify(fs.existsSync);
+const renameFileAsync = promisify(fs.rename);
 
 const createModel = require('../../utils/modelGenerator').createModel;
 
@@ -34,6 +38,7 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
+  console.log(data);
 
   // generate access keys (To be model)
   const apiKey = uuidv1();
@@ -47,7 +52,6 @@ exports.createApi = async ctx => {
       ctx.body = 'An api with this name already exists';
       ctx.status = 202;
     } else {
-      console.log(data);
       const result = await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
@@ -88,7 +92,6 @@ exports.getApi = async ctx => {
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
-      console.log(apiName)
       ctx.body = 'No APIs found with that name.';
       ctx.status = 200;
     } else {
@@ -120,6 +123,41 @@ exports.getUserApis = async ctx => {
     ctx.status = 503;
   }
 };
+
+exports.updateApi = async ctx => {
+  const apiName = ctx.params.api_name;
+  const data = ctx.request.body;
+  let redisName = redisPrefix + apiName;
+  const redisValue = await redis.get(redisName);
+  const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
+  try {
+    if (data.api_name) {
+      const exists = await redis.get(redisPrefix + data.api_name);
+      if (exists) {
+        ctx.body = 'An api with this name already exists.'; // perhaps could validate this in the front end with the api/validate endpoint?
+        return ctx.status = 200;
+      }
+      await redis.rename(redisPrefix + apiName, redisPrefix + data.api_name);
+      redisName = redisPrefix + data.api_name;
+      await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`)
+    }
+    if (data.hasOwnProperty('public')) await redis.set(redisName, `${data.public}:${oldApiKey}:${oldApiSecretKey}`);
+    if (data.api_key) await redis.set(redisName, `${oldPublic}:${data.api_key}:${oldApiSecretKey}`);
+    if (data.api_secret_key) await redis.set(redisName, `${oldPublic}:${oldApiKey}:${data.api_secret_key}`);
+    const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, data, { new: true });
+    if (result) {
+      ctx.body = result;
+      ctx.status = 200;
+    } else {
+      ctx.body = 'ID not found.';
+      ctx.status = 404;
+    }
+  } catch (error) {
+    console.log(`Error updating ${apiName} API`, error);
+    ctx.body = `Error udpating ${apiName} API`;
+    ctx.status = 500;
+  }
+}
 
 exports.deleteApi = async ctx => {
   apiName = ctx.params.api_name;
