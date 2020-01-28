@@ -61,7 +61,7 @@ exports.updateRecord = async ctx => {
   const model = require(`../../models/api/${apiName}Model.js`);
 
   try {
-    const result = await model.findOneAndUpdate({ _id: recordId }, data);
+    const result = await model.findOneAndUpdate({ _id: recordId }, data, { new: true });
     if (result) {
       ctx.body = result;
       ctx.status = 200;
