@@ -8,12 +8,17 @@ const redis = require('../../db/redis/redis');
 
 const redisPrefix = 'api-';
 
+const forbiddenNames = ['api', 'apis', 'user', 'users'];
+
 exports.verifyApiName = async ctx => {
   const data = ctx.request.body;
   console.log(data.name)
   if (!data.name) {
     ctx.body = 'Please send an api name.'
     return ctx.satus = 400;
+  } else if (forbiddenNames.includes(data.name)) {
+    ctx.body = 'Please choose a valid name for your api'
+    return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
   if (exists) {
@@ -29,7 +34,6 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-
 
   // generate access keys (To be model)
   const apiKey = uuidv1();
