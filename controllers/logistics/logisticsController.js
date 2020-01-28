@@ -21,7 +21,7 @@ exports.verifyApiName = async ctx => {
     ctx.body = 'Please send an api name.'
     return ctx.satus = 400;
   } else if (forbiddenNames.includes(data.name)) {
-    ctx.body = 'Please choose a valid name for your api'
+    ctx.body = 'Please choose a valid name for your api.'
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
@@ -38,18 +38,19 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  console.log(data);
+  if (!data.user.id || !data.api.name || !data.api.description || !data.api.public || data.api.fields.length < 1) {
+    ctx.body = 'Check your input, one field is missing.';
+    return ctx.status = 200;
+  }
 
   // generate access keys (To be model)
   const apiKey = uuidv1();
   const apiSecretKey = crypto.randomBytes(32).toString('hex');
 
-  console.log(apiKey, apiSecretKey);
-
   try {
     const exists = await redis.get(redisPrefix + data.api.name);
     if (exists) {
-      ctx.body = 'An api with this name already exists';
+      ctx.body = 'An api with this name already exists.';
       ctx.status = 202;
     } else {
       const result = await createModel(data);
