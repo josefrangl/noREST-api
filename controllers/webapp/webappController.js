@@ -30,7 +30,7 @@ const signup = async (ctx) => {
 
         const token = createToken(responseUser);
         ctx.status = 201;
-        ctx.body = token;
+        ctx.body = {token}; // Test handlebars
 
       } else {
         ctx.body = 'Could not set user in Redis';
@@ -62,7 +62,7 @@ const login = async (ctx) => {
           email
         }
         const token = createToken(responseUser);
-        ctx.body = token; // should be the jwt token
+        ctx.body = {token}; // Test handlebars
         ctx.status = 200;
       }
     }

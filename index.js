@@ -1,26 +1,33 @@
-'use strict';
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+"use strict";
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
 }
 
-
-const Koa = require('koa');
+const Koa = require("koa");
 const app = new Koa();
 
-const bodyParser = require('koa-bodyparser');
-const cors = require('@koa/cors');
+const bodyParser = require("koa-bodyparser");
+const cors = require("@koa/cors");
 
-const jwtVerify = require('koa-jwt');
+const jwtVerify = require("koa-jwt");
+var options = {
+  origin: "http://localhost:3001",
+  credentials: true
+};
+app.use(cors(options));
+const router = require("./routes/index");
 
-const router = require('./routes/index');
+require("./db/mongodb/mongodb");
+require("./db/redis/redis");
 
-require('./db/mongodb/mongodb');
-require('./db/redis/redis');
-
-app.use(jwtVerify({ secret: process.env.JWT_SECRET }).unless({ path: [/^\/webapp\/login/, /^\/webapp\/signup/ ] })); // Test regex
+app.use(
+  jwtVerify({ secret: process.env.JWT_SECRET }).unless({
+    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z]/]
+  })
+); // Test regex for APIs
 
 app.use(bodyParser());
-app.use(cors());
+
 app.use(router());
 
 const PORT = process.env.PORT || 3000;
@@ -28,4 +35,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT);
 
 console.log(`🤖: Server listening on port ${PORT}`);
-
