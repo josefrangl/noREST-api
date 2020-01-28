@@ -26,7 +26,7 @@ const signup = async (ctx) => {
 
         // Create JWT token
         const responseUser = {
-          id: newUser._id,
+          id: newUser._id, // correct?
           email: newUser.email,
           name: newUser.name
         }
@@ -64,7 +64,7 @@ const login = async (ctx) => {
         const responseUser = {
           email,
           name,
-          id: mongoUser._id
+          id: mongoUser._id // correct??
         }
         const token = createToken(responseUser);
         ctx.body = {token};
