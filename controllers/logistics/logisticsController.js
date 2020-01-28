@@ -54,7 +54,7 @@ exports.createApi = async ctx => {
         const api = await ApiModel.create({
           api_name: data.api.name,
           description: data.api.description,
-          user: data.user.id,
+          user: data.api.user,
           public: data.api.public,
           api_key: apiKey,
           api_secret_key: apiSecretKey
@@ -104,7 +104,8 @@ exports.getApi = async ctx => {
 };
 
 exports.getUserApis = async ctx => {
-  userId = ctx.params.user_id;
+  userId = ctx.params.user_id; // send from frontend
+  console.log('ctx.params   ', ctx.params)
   try {
     const userApis = await ApiModel.find({ user: userId });
     ctx.status = 200;
