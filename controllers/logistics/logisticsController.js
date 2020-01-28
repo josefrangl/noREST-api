@@ -11,6 +11,7 @@ const redis = require('../../db/redis/redis');
 
 const redisPrefix = 'api-';
 
+// so that api names are not the same as javascript keywords/our own models:
 const forbiddenNames = ['api', 'apis', 'user', 'users', 'break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'finally', 'for', 'function', 'if', 'in', 'instanceof', 'new', 'return', 'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'NAN'];
 
 exports.verifyApiName = async ctx => {
@@ -21,11 +22,12 @@ exports.verifyApiName = async ctx => {
   if (!data.name) {
     ctx.body = 'Please send an api name.'
     return ctx.satus = 400;
-  } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) {
+  } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) { // so that api names are valid javascript variables
     ctx.body = 'Please choose a valid name for your api.'
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
+  // so that we do not overwrite an existing model as mongoose by default creates a collection with the plural of the model name (if it doesn't end in an s)
   if (data.name[data.name.length - 1] === 's') {
     pluralExists = await redis.get(redisPrefix + data.name.slice(-1));
   }
@@ -55,6 +57,7 @@ exports.createApi = async ctx => {
 
   try {
     const exists = await redis.get(redisPrefix + data.api.name);
+    // same logic as above ^^
     if (data.api.name[data.api.name.length - 1] === 's') {
       pluralExists = await redis.get(redisPrefix + data.api.name.slice(0, -1));
     }
