@@ -38,7 +38,7 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  if (!data.user.id || !data.api.name || !data.api.description || !data.api.public || data.api.fields.length < 1) {
+  if (!data.api.user || !data.api.name || !data.api.description || !data.api.public || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
     return ctx.status = 200;
   }
