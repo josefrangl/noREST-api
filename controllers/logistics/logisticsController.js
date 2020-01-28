@@ -2,7 +2,6 @@ const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
 const fs = require('fs');
 const { promisify } = require('util');
-const existsFileAsync = promisify(fs.existsSync);
 const renameFileAsync = promisify(fs.rename);
 
 const createModel = require('../../utils/modelGenerator').createModel;
@@ -25,7 +24,10 @@ exports.verifyApiName = async ctx => {
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
-  if (exists) {
+  if (data.api.name[data.name.length - 1] === 's') {
+    const pluralExists = await redis.get(redisPrefix + data.api.name.slice(-1));
+  }
+  if (exists || pluralExists) {
     ctx.body = 'An api with this name already exists';
     ctx.status = 202;
   } else if (!exists) {
@@ -47,11 +49,16 @@ exports.createApi = async ctx => {
   const apiKey = uuidv1();
   const apiSecretKey = crypto.randomBytes(32).toString('hex');
 
+  let pluralExists;
+
   try {
     const exists = await redis.get(redisPrefix + data.api.name);
-    if (exists) {
+    if (data.api.name[data.api.name.length - 1] === 's') {
+      pluralExists = await redis.get(redisPrefix + data.api.name.slice(0, -1));
+    }
+    if (exists || pluralExists) {
       ctx.body = 'An api with this name already exists.';
-      ctx.status = 202;
+      return ctx.status = 202;
     } else {
       const result = await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
