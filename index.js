@@ -12,7 +12,6 @@ const cors = require("@koa/cors");
 const jwtVerify = require("koa-jwt");
 var options = {
   origin: "http://localhost:3001", // Info in .env, port may change
-  // credentials: true
 };
 app.use(cors(options));
 const router = require("./routes/index");
