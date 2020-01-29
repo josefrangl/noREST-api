@@ -2,7 +2,10 @@ const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
 const fs = require('fs');
 const { promisify } = require('util');
+const readFileAsync = promisify(fs.readFile);
+const writeFileAsync = promisify(fs.writeFile);
 const renameFileAsync = promisify(fs.rename);
+const mongoose = require('mongoose');
 
 const createModel = require('../../utils/modelGenerator').createModel;
 
@@ -14,7 +17,7 @@ const redisPrefix = 'api-';
 // so that api names are not the same as javascript keywords/our own models:
 const forbiddenNames = ['api', 'apis', 'user', 'users', 'break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'finally', 'for', 'function', 'if', 'in', 'instanceof', 'new', 'return', 'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'NAN'];
 
-exports.verifyApiName = async ctx => {
+exports.verifyApiName = async ctx => { // put this in a helper functio in utils
   const data = ctx.request.body;
 
   let pluralExists;
@@ -44,7 +47,8 @@ exports.verifyApiName = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  if (!data.api.user || !data.api.name || !data.api.public || data.api.fields.length < 1) {
+
+  if (!data.user || !data.api.name || !data.api.hasOwnProperty('public') || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
     return ctx.status = 200;
   }
@@ -147,23 +151,48 @@ exports.getUserApis = async ctx => {
 exports.updateApi = async ctx => {
   const apiName = ctx.params.api_name;
   const data = ctx.request.body;
+  const oldNameExists = await redis.get(redisPrefix + apiName)
+  if (!oldNameExists) {
+    ctx.body = `There is no API with the name ${apiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
+    return ctx.status = 200;
+  }
   let redisName = redisPrefix + apiName;
   const redisValue = await redis.get(redisName);
   const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
   try {
+
     if (data.api_name) {
-      const exists = await redis.get(redisPrefix + data.api_name);
-      if (exists) {
+      const newNameExists = await redis.get(redisPrefix + data.api_name);
+      if (newNameExists) { // or plural exists
         ctx.body = 'An api with this name already exists.'; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 200;
       }
-      await redis.rename(redisPrefix + apiName, redisPrefix + data.api_name);
-      redisName = redisPrefix + data.api_name;
-      await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`)
+      const db = mongoose.connection.db;
+      let pluralName = apiName;
+      if (apiName[apiName.length - 1] !== 's') pluralName = apiName + 's';
+      console.log(pluralName)
+      const renamed = await db.collection(pluralName).rename(data.api_name + 's');
+      if (renamed) {
+        const oldFile = await readFileAsync(`models/api/${apiName.toLowerCase()}Model.js`);
+        const oldModelInstantiation = `mongoose.model('${apiName.toLowerCase()}', `;
+        const newModelInstantiation = `mongoose.model('${data.api_name.toLowerCase()}', `;
+        const replacedData = oldFile.toString().replace(oldModelInstantiation, newModelInstantiation);
+
+        await writeFileAsync(`models/api/${apiName}Model.js`, replacedData);
+
+        await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`);
+
+        await redis.rename(redisPrefix + apiName, redisPrefix + data.api_name);
+
+        redisName = redisPrefix + data.api_name;
+      }
     }
-    if (data.hasOwnProperty('public')) await redis.set(redisName, `${data.public}:${oldApiKey}:${oldApiSecretKey}`);
-    if (data.api_key) await redis.set(redisName, `${oldPublic}:${data.api_key}:${oldApiSecretKey}`);
-    if (data.api_secret_key) await redis.set(redisName, `${oldPublic}:${oldApiKey}:${data.api_secret_key}`);
+    const newPublic = data.public || oldPublic;
+    const newApiKey = data.api_key || oldApiKey;
+    const newApiSecretKey = data.api_secret_key || oldApiSecretKey;
+
+    if (data.hasOwnProperty('public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
+
     const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, data, { new: true });
     if (result) {
       ctx.body = result;
