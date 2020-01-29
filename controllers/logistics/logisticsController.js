@@ -76,6 +76,12 @@ exports.createApi = async ctx => {
           api_key: apiKey,
           api_secret_key: apiSecretKey
         });
+        
+        // we insert a blank document into the collection (model) so that mongo creates the collection.
+        // else the collection won't be created in mongo until the first document insertion.
+        const apiName = data.api.name.toLowerCase();
+        const model = require(`../../models/api/${apiName}Model.js`);
+        const firstBlankDocument = await model.create({});
 
         ctx.body = api;
         ctx.status = 201;
