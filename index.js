@@ -21,7 +21,7 @@ require("./db/redis/redis");
 
 app.use(
   jwtVerify({ secret: process.env.JWT_SECRET }).unless({
-    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z\d]+/]
+    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z\d]+/, /^\/logistics\/api\/verify/]
   })
 ); // Test regex for APIs
 
