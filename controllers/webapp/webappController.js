@@ -48,7 +48,7 @@ const signup = async (ctx) => {
 }
 
 const login = async (ctx) => {
-  const { name, email, password } = ctx.request.body;
+  const { email, password } = ctx.request.body;
   try {
     const user = await redis.exists(redisPrefix + email);
     if (!user) {
@@ -60,11 +60,12 @@ const login = async (ctx) => {
       if (!valid) ctx.body = 'Incorrect password.'
       else {
         // Create JWT token
-        const mongoUser = await userModel.find({email: email})
+        const mongoUser = await userModel.find({email: email});
+        console.log('MONGO USER   ', mongoUser);
         const responseUser = {
           email,
-          name,
-          id: mongoUser._id // correct??
+          name: mongoUser[0].name,
+          id: mongoUser[0]._id
         }
         const token = createToken(responseUser);
         ctx.body = {token};
