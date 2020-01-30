@@ -75,7 +75,7 @@ exports.createApi = async ctx => {
         const api = await ApiModel.create({
           api_name: data.api.name,
           description: data.api.description,
-          user: data.api.user,
+          user: data.user.id,
           public: data.api.public,
           api_key: apiKey,
           api_secret_key: apiSecretKey
