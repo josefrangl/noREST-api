@@ -23,10 +23,10 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
   let pluralExists;
 
   if (!data.name) {
-    ctx.body = 'Please send an api name.'
+    ctx.body = 'Please send an api name.';
     return ctx.satus = 400;
   } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) { // so that api names are valid javascript variables
-    ctx.body = 'Please choose a valid name for your api.'
+    ctx.body = 'Please choose a valid name for your api.';
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
@@ -41,7 +41,7 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
     ctx.body = data.name;
     ctx.status = 200;
   }
-}
+};
 
 
 exports.createApi = async ctx => {
@@ -93,25 +93,26 @@ exports.createApi = async ctx => {
     }
 
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error saving api to the database: ', error);
     ctx.status = 400;
   }
 };
 
 exports.adminGetAllApi = async ctx => {
-  console.log('ctx');
   try {
     const apiList = await ApiModel.find({});
     ctx.body = apiList;
     ctx.status = 200;
   } catch (error) {
-    console.log('Error fetching all APIs for admin: ', e);
+    // eslint-disable-next-line no-console
+    console.log('Error fetching all APIs for admin: ', error);
     ctx.status = 400;
   }
 };
 
 exports.getApi = async ctx => {
-  apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name;
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
@@ -123,8 +124,9 @@ exports.getApi = async ctx => {
       ctx.body = api;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error fetching API: ', error);
-    ctx.body = 'Error fetching API from database.'
+    ctx.body = 'Error fetching API from database.';
     ctx.status = 503;
   }
 };
@@ -142,8 +144,9 @@ exports.getUserApis = async ctx => {
       ctx.status = 204;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error fetching user APIs: ', error);
-    ctx.body = 'Error fetching user APIs from database.'
+    ctx.body = 'Error fetching user APIs from database.';
     ctx.status = 503;
   }
 };
@@ -154,7 +157,8 @@ exports.updateApi = async ctx => {
   const newApiName = data.api_name;
 
   // check that the api exists
-  const oldNameExists = await redis.get(redisPrefix + oldApiName)
+  const oldNameExists = await redis.get(redisPrefix + oldApiName);
+  
   if (!oldNameExists) {
     ctx.body = `There is no API with the name ${oldApiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 200;
@@ -165,8 +169,10 @@ exports.updateApi = async ctx => {
   const redisValue = await redis.get(redisName);
   const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
   try {
+    
     // if the client wants to change the api name
     if (newApiName) {
+      
       // to check if the new api name is already being used
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
@@ -215,14 +221,15 @@ exports.updateApi = async ctx => {
       ctx.status = 404;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error updating ${oldApiName} API to be ${newApiName}`, error);
     ctx.body = `Error udpating ${oldApiName} API to be ${newApiName}`;
     ctx.status = 500;
   }
-}
+};
 
 exports.deleteApi = async ctx => {
-  apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name;
   try {
     const redisDelete = await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
@@ -234,19 +241,9 @@ exports.deleteApi = async ctx => {
       ctx.status = 204;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error deleting API: ', error);
-    ctx.body = 'Error deleting API from database.'
+    ctx.body = 'Error deleting API from database.';
     ctx.status = 503;
   }
 };
-
-
-
-
-
-
-
-
-
-
-

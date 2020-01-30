@@ -1,26 +1,16 @@
-// To install redis:
-// $ brew install redis
-
-// To start up with redis server:
-// $ brew services start redis
-
-// To check if the server is connected do:
-// $ redis-cli ping     --> it should reply with PONG if the connection goes through
-
-// In another terminal if you want to open a redis connection:
-// $ redis-cli
+'use strict';
 
 const redis = require('redis');
-const { promisify } = require('util')
-
+const { promisify } = require('util');
 
 const redisUrl = process.env.REDIS_URL || '';
 
 const client = redis.createClient(redisUrl);
 
 client.on('connect', () => {
+  // eslint-disable-next-line no-console
   console.log('💾 Redis is connected!!');
-})
+});
 
 
 const db = {
@@ -29,12 +19,13 @@ const db = {
   exists: promisify(client.exists).bind(client),
   delete: promisify(client.del).bind(client),
   rename: promisify(client.rename).bind(client)
-}
+};
 
 module.exports = db;
 
 
-// redis does not use models, but for reference, the data we are saving is in the format:
+// redis does not use models, but for reference, 
+// the data we are saving is in the following format:
 
 //  key : value
 
