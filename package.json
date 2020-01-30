@@ -30,6 +30,7 @@
     "koa-jwt": "^3.6.0",
     "koa-router": "^8.0.6",
     "mongoose": "^5.8.9",
+    "nodemailer": "^6.4.2",
     "redis": "^2.8.0",
     "uuid": "^3.4.0"
   },

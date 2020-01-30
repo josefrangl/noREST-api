@@ -2,6 +2,8 @@ const userModel = require('../../models/webapp/webappModel');
 const createToken = require('../../utils/createToken');
 const bcrypt = require('bcrypt');
 const redis = require('../../db/redis/redis');
+const uuidv1 = require('uuid/v1');
+const sendForgotPasswordMail = require('../../utils/forgotPasswordEmail');
 
 const redisPrefix = 'user-';
 
@@ -51,8 +53,11 @@ const signup = async (ctx) => {
 
 const login = async (ctx) => {
   const { email, password } = ctx.request.body;
+  console.log(ctx.request.body);
+  console.log(typeof password);
   try {
-    const hashPassword = await redis.exists(redisPrefix + email);
+    const hashPassword = await redis.get(redisPrefix + email);
+    console.log(hashPassword);
     if (!hashPassword) {
       ctx.body = 'This email has not been registered';
       ctx.status = 202;
@@ -97,21 +102,19 @@ const editUser = async (ctx) => {
         if (!valid) ctx.body = 'Make sure you entered your old password correctly.';
         else {
           const saltRounds = 10; // move this to the env file
-          hashNewPassword = await bcrypt.hash(password, saltRounds);
+          hashNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
           // update redis password
           await redis.set(redisPrefix + email, hashNewPassword);
         }
       }
-      const password = hashNewPassword || hashOldPassword;
       const data = {
         password: hashNewPassword || hashOldPassword
-      }
+      };
       if (name) data.name = name;
-      console.log(data)
 
       // update mongoose
-      const result = await userModel.findOneAndUpdate({ email: email }, data, { new: true })
+      const result = await userModel.findOneAndUpdate({ email: email }, data, { new: true });
       ctx.body = result;
       ctx.status = 201;
     }
@@ -121,10 +124,41 @@ const editUser = async (ctx) => {
     ctx.body = 'Error updating user details';
     ctx.status = 503;
   }
-}
+};
+
+const forgotPassword = async (ctx) => {
+  const email = ctx.params.email;
+  const newPassword = uuidv1();
+  const saltRounds = 10; // move this to the env file
+  const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
+  console.log(newHashPassword);
+  const data = {
+    password: newHashPassword
+  };
+
+
+  await redis.set(redisPrefix + email, newHashPassword);
+  const updatedUser = await userModel.findOneAndUpdate({ email: email }, data, { new: true });
+
+  const response = {
+    id: updatedUser._id,
+    name: updatedUser.name,
+    email: updatedUser.email
+  };
+
+  // send email
+  await sendForgotPasswordMail(updatedUser.name, email, newPassword);
+
+  ctx.body = response;
+  ctx.status = 201;
+  // update redis
+  // update mongo
+  // send email with new password
+};
 
 module.exports = {
   signup,
   login,
   editUser,
+  forgotPassword
 };
