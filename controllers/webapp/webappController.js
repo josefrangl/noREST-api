@@ -53,11 +53,8 @@ const signup = async (ctx) => {
 
 const login = async (ctx) => {
   const { email, password } = ctx.request.body;
-  console.log(ctx.request.body);
-  console.log(typeof password);
   try {
     const hashPassword = await redis.get(redisPrefix + email);
-    console.log(hashPassword);
     if (!hashPassword) {
       ctx.body = 'This email has not been registered';
       ctx.status = 202;
@@ -131,29 +128,32 @@ const forgotPassword = async (ctx) => {
   const newPassword = uuidv1();
   const saltRounds = 10; // move this to the env file
   const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
-  console.log(newHashPassword);
   const data = {
     password: newHashPassword
   };
 
+  try {
+    await redis.set(redisPrefix + email, newHashPassword);
+    const updatedUser = await userModel.findOneAndUpdate({ email: email }, data, { new: true });
 
-  await redis.set(redisPrefix + email, newHashPassword);
-  const updatedUser = await userModel.findOneAndUpdate({ email: email }, data, { new: true });
+    const response = {
+      id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email
+    };
 
-  const response = {
-    id: updatedUser._id,
-    name: updatedUser.name,
-    email: updatedUser.email
-  };
+    // send email
+    await sendForgotPasswordMail(updatedUser.name, email, newPassword);
 
-  // send email
-  await sendForgotPasswordMail(updatedUser.name, email, newPassword);
+    ctx.body = response;
+    ctx.status = 201;
 
-  ctx.body = response;
-  ctx.status = 201;
-  // update redis
-  // update mongo
-  // send email with new password
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(`Error restting password for user: ${email}`, error);
+    ctx.body = 'Error resetting password';
+    ctx.status = 503;
+  }
 };
 
 module.exports = {
