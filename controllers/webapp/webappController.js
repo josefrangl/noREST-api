@@ -51,6 +51,8 @@ const confirmEmail = async (ctx) => {
     // check email exists in db
     const exists = await redis.get(redisPrefix + email);
     if (exists) {
+      const data = { active: true };
+      const user = await userModel.findOne({ email: email });
 
       // create JWT token
 
