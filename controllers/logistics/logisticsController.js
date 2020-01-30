@@ -48,7 +48,7 @@ exports.createApi = async ctx => {
 
   const data = ctx.request.body;
 
-  if (!data.user || !data.api.name || !data.api.hasOwnProperty('public') || data.api.fields.length < 1) {
+  if (!data.user || !data.api.name || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
     return ctx.status = 200;
   }
@@ -208,7 +208,7 @@ exports.updateApi = async ctx => {
     const newApiKey = data.api_key || oldApiKey;
     const newApiSecretKey = data.api_secret_key || oldApiSecretKey;
 
-    if (data.hasOwnProperty('public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
+    if (Object.prototype.hasOwnProperty.call(data.api, 'public')|| data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
 
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;

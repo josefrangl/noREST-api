@@ -1,3 +1,4 @@
 node_modules
 test
 models/api/*
+.DS_Store
