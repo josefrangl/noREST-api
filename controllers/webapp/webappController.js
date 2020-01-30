@@ -6,7 +6,7 @@ const redis = require('../../db/redis/redis');
 const redisPrefix = 'user-';
 
 const signup = async (ctx) => {
-  const { name , email, password } = ctx.request.body;
+  const { name, email, password } = ctx.request.body;
   const saltRounds = 10; // move this to the env file
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
@@ -33,7 +33,7 @@ const signup = async (ctx) => {
 
         const token = createToken(responseUser);
         ctx.status = 201;
-        ctx.body = {token};
+        ctx.body = { token };
 
       } else {
         ctx.body = 'Could not set user in Redis';
@@ -62,7 +62,7 @@ const login = async (ctx) => {
       if (!valid) ctx.body = 'Incorrect password.';
       else {
         // Create JWT token
-        const mongoUser = await userModel.find({email: email});
+        const mongoUser = await userModel.find({ email: email });
         const responseUser = {
           email,
           name: mongoUser[0].name,
