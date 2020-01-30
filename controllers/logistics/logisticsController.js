@@ -48,7 +48,7 @@ exports.createApi = async ctx => {
 
   const data = ctx.request.body;
 
-  if (!data.user || !data.api.name || !data.api.hasOwnProperty('public') || data.api.fields.length < 1) {
+  if (!data.user || !data.api.name || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
     return ctx.status = 200;
   }
@@ -69,7 +69,7 @@ exports.createApi = async ctx => {
       ctx.body = 'An api with this name already exists.';
       return ctx.status = 202;
     } else {
-      const result = await createModel(data);
+      await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
         const api = await ApiModel.create({
@@ -80,12 +80,12 @@ exports.createApi = async ctx => {
           api_key: apiKey,
           api_secret_key: apiSecretKey
         });
-        
+
         // we insert a blank document into the collection (model) so that mongo creates the collection.
         // else the collection won't be created in mongo until the first document insertion.
         const apiName = data.api.name.toLowerCase();
         const model = require(`../../models/api/${apiName}Model.js`);
-        const firstBlankDocument = await model.create({});
+        await model.create({});
 
         ctx.body = api;
         ctx.status = 201;
@@ -158,7 +158,7 @@ exports.updateApi = async ctx => {
 
   // check that the api exists
   const oldNameExists = await redis.get(redisPrefix + oldApiName);
-  
+
   if (!oldNameExists) {
     ctx.body = `There is no API with the name ${oldApiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 200;
@@ -169,10 +169,10 @@ exports.updateApi = async ctx => {
   const redisValue = await redis.get(redisName);
   const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
   try {
-    
+
     // if the client wants to change the api name
     if (newApiName) {
-      
+
       // to check if the new api name is already being used
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
@@ -208,7 +208,7 @@ exports.updateApi = async ctx => {
     const newApiKey = data.api_key || oldApiKey;
     const newApiSecretKey = data.api_secret_key || oldApiSecretKey;
 
-    if (data.hasOwnProperty('public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
+    if (Object.prototype.hasOwnProperty.call(data.api, 'public')|| data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
 
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;
@@ -231,7 +231,7 @@ exports.updateApi = async ctx => {
 exports.deleteApi = async ctx => {
   const apiName = ctx.params.api_name;
   try {
-    const redisDelete = await redis.delete(redisPrefix + apiName);
+    await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
     if (api) {
       ctx.body = api;
