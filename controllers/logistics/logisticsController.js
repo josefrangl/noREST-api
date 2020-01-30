@@ -157,7 +157,8 @@ exports.updateApi = async ctx => {
   const newApiName = data.api_name;
 
   // check that the api exists
-  const oldNameExists = await redis.get(redisPrefix + oldApiName)
+  const oldNameExists = await redis.get(redisPrefix + oldApiName);
+  
   if (!oldNameExists) {
     ctx.body = `There is no API with the name ${oldApiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 200;

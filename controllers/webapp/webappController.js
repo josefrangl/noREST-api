@@ -10,8 +10,6 @@ const signup = async (ctx) => {
   const saltRounds = 10; // move this to the env file
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
-  console.log(name, email, password);
-
   try {
     const user = await redis.get(redisPrefix + email);
     if (user) {
