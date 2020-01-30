@@ -20,10 +20,10 @@ exports.verifyApiName = async ctx => {
   let pluralExists;
 
   if (!data.name) {
-    ctx.body = 'Please send an api name.'
+    ctx.body = 'Please send an api name.';
     return ctx.satus = 400;
   } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) { // so that api names are valid javascript variables
-    ctx.body = 'Please choose a valid name for your api.'
+    ctx.body = 'Please choose a valid name for your api.';
     return ctx.status = 400;
   }
   const exists = await redis.get(redisPrefix + data.name);
@@ -38,7 +38,7 @@ exports.verifyApiName = async ctx => {
     ctx.body = data.name;
     ctx.status = 200;
   }
-}
+};
 
 
 exports.createApi = async ctx => {
@@ -83,25 +83,26 @@ exports.createApi = async ctx => {
     }
 
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error saving api to the database: ', error);
     ctx.status = 400;
   }
 };
 
 exports.adminGetAllApi = async ctx => {
-  console.log('ctx');
   try {
     const apiList = await ApiModel.find({});
     ctx.body = apiList;
     ctx.status = 200;
   } catch (error) {
-    console.log('Error fetching all APIs for admin: ', e);
+    // eslint-disable-next-line no-console
+    console.log('Error fetching all APIs for admin: ', error);
     ctx.status = 400;
   }
 };
 
 exports.getApi = async ctx => {
-  apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name;
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
@@ -113,8 +114,9 @@ exports.getApi = async ctx => {
       ctx.body = api;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error fetching API: ', error);
-    ctx.body = 'Error fetching API from database.'
+    ctx.body = 'Error fetching API from database.';
     ctx.status = 503;
   }
 };
@@ -132,8 +134,9 @@ exports.getUserApis = async ctx => {
       ctx.status = 204;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error fetching user APIs: ', error);
-    ctx.body = 'Error fetching user APIs from database.'
+    ctx.body = 'Error fetching user APIs from database.';
     ctx.status = 503;
   }
 };
@@ -153,7 +156,7 @@ exports.updateApi = async ctx => {
       }
       await redis.rename(redisPrefix + apiName, redisPrefix + data.api_name);
       redisName = redisPrefix + data.api_name;
-      await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`)
+      await renameFileAsync(`models/api/${apiName.toLowerCase()}Model.js`, `models/api/${data.api_name.toLowerCase()}Model.js`);
     }
     if (data.hasOwnProperty('public')) await redis.set(redisName, `${data.public}:${oldApiKey}:${oldApiSecretKey}`);
     if (data.api_key) await redis.set(redisName, `${oldPublic}:${data.api_key}:${oldApiSecretKey}`);
@@ -167,14 +170,15 @@ exports.updateApi = async ctx => {
       ctx.status = 404;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error updating ${apiName} API`, error);
     ctx.body = `Error udpating ${apiName} API`;
     ctx.status = 500;
   }
-}
+};
 
 exports.deleteApi = async ctx => {
-  apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name;
   try {
     const redisDelete = await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
@@ -186,19 +190,9 @@ exports.deleteApi = async ctx => {
       ctx.status = 204;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error deleting API: ', error);
-    ctx.body = 'Error deleting API from database.'
+    ctx.body = 'Error deleting API from database.';
     ctx.status = 503;
   }
 };
-
-
-
-
-
-
-
-
-
-
-

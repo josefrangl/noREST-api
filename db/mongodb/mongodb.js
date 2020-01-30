@@ -1,25 +1,21 @@
-/*STEPS
-
-Using Homebrew:
-
-## Install mongodb-community (latest version) --->   brew install mongodb-community@4.2
-## Start the service in brew ---> brew services start mongodb-community
-
-
-## Run mongo on terminal to check dbs ---> mongo
-## In mongo: To check your dbs ---> >show dbs
-## Create db locally if not existing already ---> >use norest
-
-## Ready to go!
-
-*/
+'use strict';
 
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
 const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/norest';
 
-mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false });
-mongoose.connection.once('open', () => console.log(`🦌 Connected to mongo at ${url}`));
+const connectionOptions = { 
+  useNewUrlParser: true, 
+  useUnifiedTopology: true, 
+  useFindAndModify: false 
+};
+
+mongoose.connect(url, connectionOptions);
+
+mongoose.connection.once('open', () => {
+  // eslint-disable-next-line no-console
+  console.log(`🦌 Connected to mongo at ${url}`);
+});
 
 module.exports = mongoose;
