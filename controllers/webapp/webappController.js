@@ -31,7 +31,8 @@ const signup = async (ctx) => {
           id: newUser._id, // correct?
           email: newUser.email,
           name: newUser.name
-        }
+        };
+
         const token = createToken(responseUser);
         ctx.status = 201;
         ctx.body = {token};
@@ -43,11 +44,12 @@ const signup = async (ctx) => {
 
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error creating user: ', error);
     ctx.body = 'Error creating user in database.';
     ctx.status = 503;
   }
-}
+};
 
 const login = async (ctx) => {
   const { email, password } = ctx.request.body;
@@ -59,29 +61,29 @@ const login = async (ctx) => {
     } else {
       const hashPassword = await redis.get(redisPrefix + email);
       const valid = await bcrypt.compare(password, hashPassword);
-      if (!valid) ctx.body = 'Incorrect password.'
+      if (!valid) ctx.body = 'Incorrect password.';
       else {
         // Create JWT token
         const mongoUser = await userModel.find({email: email});
-        console.log('MONGO USER   ', mongoUser);
         const responseUser = {
           email,
           name: mongoUser[0].name,
           id: mongoUser[0]._id
-        }
+        };
         const token = createToken(responseUser);
-        ctx.body = {token};
+        ctx.body = { token };
         ctx.status = 200;
       }
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log('Error logging in user: ', error);
     ctx.body = 'Error logging user in database.';
     ctx.status = 503;
   }
-}
+};
 
 module.exports = {
   signup,
   login
-}
+};

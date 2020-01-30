@@ -13,6 +13,6 @@ const userModel = mongoose.model('users', {
     type: String,
     allowNull: false,
   }
-})
+});
 
 module.exports = userModel;

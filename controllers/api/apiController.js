@@ -15,6 +15,7 @@ exports.getAll = async ctx => {
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error in getting all values from DB for: ${apiName} API`, error);
     ctx.body = `Error in getting all values from DB for: ${apiName} API`;
     ctx.status = 500;
@@ -32,6 +33,7 @@ exports.getByFieldAndValue = async ctx => {
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error in getting value by field from DB for: ${apiName} API`, error);
     ctx.body = `Error in getting value by field from DB for: ${apiName} API`;
     ctx.status = 500;
@@ -48,6 +50,7 @@ exports.postData = async ctx => {
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error inserting data into DB for: ${apiName} API`, error);
     ctx.body = `Error inserting data into DB for: ${apiName} API`;
     ctx.status = 500;
@@ -70,6 +73,7 @@ exports.updateRecord = async ctx => {
       ctx.status = 404;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error updating record ${recordId} from DB for: ${apiName} API`, error);
     ctx.body = `Error udpating record ${recordId} from DB for: ${apiName} API`;
     ctx.status = 500;
@@ -88,10 +92,11 @@ exports.deleteRecord = async ctx => {
       ctx.body = result;
       ctx.status = 200;
     } else {
-      ctx.body = 'No record found with that ID.'
+      ctx.body = 'No record found with that ID.';
       ctx.status = 404;
     }
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(`Error deleting record from DB for: ${apiName} API`, error);
     ctx.body = `Error deleting record from DB for: ${apiName} API`;
     ctx.status = 500;
