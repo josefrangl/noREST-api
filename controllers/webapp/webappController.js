@@ -16,7 +16,7 @@ const signup = async (ctx) => {
   try {
     const user = await redis.get(redisPrefix + email);
     if (user) {
-      ctx.body = 'This email is already registered.'; // be less sepcific
+      ctx.body = { error: 'This email is already registered.' }; // be less sepcific
       ctx.status = 202;
     } else {
       const redisUser = await redis.set(redisPrefix + email, hashPassword);
@@ -35,8 +35,8 @@ const signup = async (ctx) => {
         };
 
         const token = createToken(responseUser);
-        ctx.status = 201;
         ctx.body = { token };
+        ctx.status = 200;
 
       } else {
         ctx.body = 'Could not set user in Redis';
@@ -45,8 +45,7 @@ const signup = async (ctx) => {
 
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log('Error creating user: ', error);
+    console.error('Error creating user: ', error);
     ctx.body = 'Error creating user in database.';
     ctx.status = 503;
   }
@@ -57,11 +56,14 @@ const login = async (ctx) => {
   try {
     const hashPassword = await redis.get(redisPrefix + email);
     if (!hashPassword) {
-      ctx.body = 'This email has not been registered';
+      ctx.body = { error: 'Email dos not exist.' };
       ctx.status = 202;
     } else {
       const valid = await bcrypt.compare(password, hashPassword);
-      if (!valid) ctx.body = 'Incorrect password.';
+      if (!valid) {
+        ctx.body = { error: 'Incorrect password.' };
+        ctx.status = 202;
+      }
       else {
         // Create JWT token
         const mongoUser = await userModel.find({ email: email });
@@ -117,8 +119,7 @@ const editUser = async (ctx) => {
       ctx.status = 201;
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`Error updating details for user: ${email}.`, error);
+    console.error(`Error updating details for user: ${email}.`, error);
     ctx.body = 'Error updating user details.';
     ctx.status = 503;
   }
