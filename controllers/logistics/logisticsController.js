@@ -189,7 +189,6 @@ exports.updateApi = async ctx => {
 
     // if the client wants to change the api name
     if (newApiName) {
-
       // to check if the new api name is already being used
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
@@ -231,11 +230,20 @@ exports.updateApi = async ctx => {
 
     if (Object.prototype.hasOwnProperty.call(data, 'public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
 
+    let mongooseObj = {};
+    for (let key in data) {
+      if (data[key] !== '' && key !== 'api_fields') mongooseObj[key] = data[key];
+    }
+
+    if (data.api_description) {
+      mongooseObj.description = data.api_description;
+    }
+
     // do separate quieries for general update and push
 
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;
-    const result = await ApiModel.findOneAndUpdate({ api_name: mongooseModelName }, data, { new: true });
+    const result = await ApiModel.findOneAndUpdate({ api_name: mongooseModelName }, mongooseObj, { new: true });
     if (result) {
       ctx.body = result;
       ctx.status = 200;
