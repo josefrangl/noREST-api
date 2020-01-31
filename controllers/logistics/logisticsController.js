@@ -68,6 +68,9 @@ exports.createApi = async ctx => {
     if (exists || pluralExists) {
       ctx.body = 'An api with this name already exists.';
       return ctx.status = 202;
+    } else if (forbiddenNames.includes(data.user.name) || data.user.name[0] === '-' || data.user.name.includes(' ') || /[0-9]/.test(data.user.name[0])) {
+      ctx.body = 'Please choose a valid name for your api.';
+      return ctx.status = 400;
     } else {
       await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
