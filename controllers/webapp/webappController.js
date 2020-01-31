@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const redis = require('../../db/redis/redis');
 const uuidv1 = require('uuid/v1');
 const sendForgotPasswordMail = require('../../utils/forgotPasswordEmail');
+const ApiModel = require('../../models/logistics/logisticsModel');
 
 const redisPrefix = 'user-';
 
@@ -117,8 +118,8 @@ const editUser = async (ctx) => {
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(`Error updating details for user: ${email}`, error);
-    ctx.body = 'Error updating user details';
+    console.log(`Error updating details for user: ${email}.`, error);
+    ctx.body = 'Error updating user details.';
     ctx.status = 503;
   }
 };
@@ -150,8 +151,38 @@ const forgotPassword = async (ctx) => {
 
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(`Error restting password for user: ${email}`, error);
+    console.log(`Error resetting password for user: ${email}.`, error);
     ctx.body = 'Error resetting password';
+    ctx.status = 503;
+  }
+};
+
+const deleteUser = async (ctx) => {
+  const id = ctx.params.user_id;
+
+  try {
+    const { email } = await userModel.findOne({ _id: id });
+    const userApis = await ApiModel.find({ user: id });
+
+    // delete from mongoose
+    const deleted = await ApiModel.deleteMany({ user: id });
+    if (deleted) {
+
+      // delete from redis
+      // has to be map as promise all expects an array of promise and map returns an array whereas forEach will only iterate
+      await Promise.all(userApis.map(async (api) => {
+        await redis.delete('api-' + api.api_name);
+      }));
+      await ApiModel.deleteOne({ _id: id });
+      await redis.delete(redisPrefix + email);
+
+      ctx.body = deleted;
+      ctx.status = 201;
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(`Error deleting user: ${id}.`, error);
+    ctx.body = 'Error deleting user.';
     ctx.status = 503;
   }
 };
@@ -160,5 +191,6 @@ module.exports = {
   signup,
   login,
   editUser,
-  forgotPassword
+  forgotPassword,
+  deleteUser
 };
