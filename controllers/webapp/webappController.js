@@ -56,7 +56,7 @@ const login = async (ctx) => {
   try {
     const hashPassword = await redis.get(redisPrefix + email);
     if (!hashPassword) {
-      ctx.body = { error: 'Email dos not exist.' };
+      ctx.body = { error: 'Email does not exist.' };
       ctx.status = 202;
     } else {
       const valid = await bcrypt.compare(password, hashPassword);
@@ -93,13 +93,16 @@ const editUser = async (ctx) => {
   try {
     // check the user exists
     if (!hashOldPassword) {
-      ctx.body = 'This email has not been registered';
+      ctx.body = { error: 'This email has not been registered' };
       ctx.status = 202;
     } else {
       // compare passwords
       if (newPassword) {
         const valid = await bcrypt.compare(oldPassword, hashOldPassword);
-        if (!valid) ctx.body = 'Make sure you entered your old password correctly.';
+        if (!valid) {
+          ctx.body = { error: 'Make sure you entered your old password correctly.' };
+          ctx.status = 202;
+        } 
         else {
           const saltRounds = 10; // move this to the env file
           hashNewPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -116,7 +119,7 @@ const editUser = async (ctx) => {
       // update mongoose
       const result = await userModel.findOneAndUpdate({ email: email }, data, { new: true });
       ctx.body = result;
-      ctx.status = 201;
+      ctx.status = 200;
     }
   } catch (error) {
     console.error(`Error updating details for user: ${email}.`, error);

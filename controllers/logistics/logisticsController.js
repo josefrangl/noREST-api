@@ -23,11 +23,11 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
   let pluralExists;
 
   if (!data.name) {
-    ctx.body = 'Please send an api name.';
-    return ctx.satus = 400;
+    ctx.body = { error: 'Please send an api name.' };
+    ctx.status = 400;
   } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) { // so that api names are valid javascript variables
-    ctx.body = 'Please choose a valid name for your api.';
-    return ctx.status = 400;
+    ctx.body = { error: 'Please choose a valid name for your api.' };
+    ctx.status = 202; 
   }
   const exists = await redis.get(redisPrefix + data.name);
   // so that we do not overwrite an existing model as mongoose by default creates a collection with the plural of the model name (if it doesn't end in an s)
@@ -35,7 +35,7 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
     pluralExists = await redis.get(redisPrefix + data.name.slice(-1));
   }
   if (exists || pluralExists) {
-    ctx.body = 'An api with this name already exists';
+    ctx.body = { error: 'An api with this name already exists' };
     ctx.status = 202;
   } else if (!exists) {
     ctx.body = data.name;
@@ -50,7 +50,7 @@ exports.createApi = async ctx => {
 
   if (!data.user || !data.api.name || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = 'Check your input, one field is missing.';
-    return ctx.status = 200;
+    ctx.status = 202;
   }
 
   // generate access keys (To be model)
@@ -66,11 +66,14 @@ exports.createApi = async ctx => {
       pluralExists = await redis.get(redisPrefix + data.api.name.slice(0, -1));
     }
     if (exists || pluralExists) {
-      ctx.body = 'An api with this name already exists.';
-      return ctx.status = 202;
-    } else if (forbiddenNames.includes(data.user.name) || data.user.name[0] === '-' || data.user.name.includes(' ') || /[0-9]/.test(data.user.name[0])) {
-      ctx.body = 'Please choose a valid name for your api.';
-      return ctx.status = 400;
+      ctx.body = { error :'An api with this name already exists.' };
+      ctx.status = 202;
+    } else if (forbiddenNames.includes(data.api.name) || data.api.name[0] === '-' || data.api.name.includes(' ') || /[0-9]/.test(data.api.name[0])) {
+      ctx.body = { error: 'Please choose a valid name for your api.' };
+      // note I jose fran changed this from 400 to 202, correct is 204, however 
+      // for error handling in the frontend (until validation is done) 
+      // it nees to be a 202.
+      ctx.status = 202;
     } else {
       await createModel(data);
       const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
@@ -99,8 +102,8 @@ exports.createApi = async ctx => {
     }
 
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log('Error saving api to the database: ', error);
+    console.error('Error saving api to the database: ', error);
+    ctx.body = 'Error saving api to the database';
     ctx.status = 400;
   }
 };
@@ -122,8 +125,8 @@ exports.getApi = async ctx => {
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
-      ctx.body = `No APIs found with name: ${apiName}.`;
-      ctx.status = 200;
+      ctx.body = { error: `No APIs found with name: ${apiName}.`};
+      ctx.status = 202;
     } else {
       const api = await ApiModel.findOne({ api_name: apiName });
       ctx.status = 200;
@@ -150,8 +153,7 @@ exports.getUserApis = async ctx => {
       ctx.status = 204;
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log('Error fetching user APIs: ', error);
+    console.error('Error fetching user APIs: ', error);
     ctx.body = 'Error fetching user APIs from database.';
     ctx.status = 503;
   }
@@ -168,15 +170,15 @@ exports.updateApi = async ctx => {
     const updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
     if (updatedFields) {
       ctx.body = updatedFields;
-      return ctx.status = 200;
+      ctx.status = 200;
     }
   }
 
   const newApiName = data.api_name;
 
   if (!oldNameExists) {
-    ctx.body = `There is no API with the name ${oldApiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
-    return ctx.status = 200;
+    ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
+    ctx.status = 202;
   }
 
   // to get the values saved in redis
@@ -191,8 +193,8 @@ exports.updateApi = async ctx => {
       // to check if the new api name is already being used
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
-        ctx.body = 'An api with this name already exists.'; // perhaps could validate this in the front end with the api/validate endpoint?
-        return ctx.status = 200;
+        ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
+        ctx.status = 202;
       }
 
       // to change model name in mongodb
@@ -238,8 +240,8 @@ exports.updateApi = async ctx => {
       ctx.body = result;
       ctx.status = 200;
     } else {
-      ctx.body = 'ID not found.';
-      ctx.status = 404;
+      ctx.body = { error: 'ID not found.'};
+      ctx.status = 202;
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -258,8 +260,8 @@ exports.deleteApi = async ctx => {
       ctx.body = api;
       ctx.status = 200;
     } else {
-      ctx.body = 'No APIs found with that name.';
-      ctx.status = 204;
+      ctx.body = { error: 'No APIs found with that name.' };
+      ctx.status = 202;
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -275,8 +277,8 @@ exports.deleteApiData = async (ctx) => {
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
-      ctx.body = `No APIs found with name: ${apiName}.`;
-      ctx.status = 200;
+      ctx.body = { error: `No APIs found with name: ${apiName}.` };
+      ctx.status = 202;
     } else {
       const deleted = await model.deleteMany({});
       ctx.body = deleted;
