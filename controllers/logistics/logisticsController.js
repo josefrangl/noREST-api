@@ -85,7 +85,9 @@ exports.createApi = async ctx => {
         // else the collection won't be created in mongo until the first document insertion.
         const apiName = data.api.name.toLowerCase();
         const model = require(`../../models/api/${apiName}Model.js`);
-        await model.create({});
+        
+        // Commented out for presentation
+        // await model.create({});
 
         ctx.body = api;
         ctx.status = 201;
