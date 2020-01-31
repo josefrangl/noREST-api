@@ -78,7 +78,8 @@ exports.createApi = async ctx => {
           user: data.user.id,
           public: data.api.public,
           api_key: apiKey,
-          api_secret_key: apiSecretKey
+          api_secret_key: apiSecretKey,
+          api_fields: data.api.fields
         });
 
         // we insert a blank document into the collection (model) so that mongo creates the collection.
@@ -156,10 +157,19 @@ exports.getUserApis = async ctx => {
 exports.updateApi = async ctx => {
   const oldApiName = ctx.params.api_name;
   const data = ctx.request.body;
-  const newApiName = data.api_name;
 
   // check that the api exists
   const oldNameExists = await redis.get(redisPrefix + oldApiName);
+
+  if (data.api_fields) {
+    const updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
+    if (updatedFields) {
+      ctx.body = updatedFields;
+      return ctx.status = 200;
+    }
+  }
+
+  const newApiName = data.api_name;
 
   if (!oldNameExists) {
     ctx.body = `There is no API with the name ${oldApiName}.`; // perhaps could validate this in the front end with the api/validate endpoint?
@@ -205,12 +215,18 @@ exports.updateApi = async ctx => {
       }
     }
 
+    // update the fields when new ones are added
+    // have to do it separately as it is a subdocument
+
+
     // update the value associated with the (potentially updated) key in redis
     const newPublic = data.public || oldPublic;
     const newApiKey = data.api_key || oldApiKey;
     const newApiSecretKey = data.api_secret_key || oldApiSecretKey;
 
-    if (Object.prototype.hasOwnProperty.call(data.api, 'public')|| data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
+    if (Object.prototype.hasOwnProperty.call(data, 'public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
+
+    // do separate quieries for general update and push
 
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;

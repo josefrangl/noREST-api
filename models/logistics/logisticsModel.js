@@ -26,6 +26,27 @@ const ApiModel = mongoose.model('apis', {
     type: String,
     allownull: false
   },
+  api_fields: {
+    type: [{ 
+      field_name: {
+        type: String,
+        allowNull: false,
+      },
+      field_type: {
+        type: String,
+        allowNull: false,
+      },
+      allow_null: {
+        type: Boolean,
+        allowNull: false,
+      },
+      default_value: {
+        type: String,
+        allowNull: false,
+      }
+    }],
+    allowNull: false
+  },
   date_created: {
     type: Date,
     allownull: false,
