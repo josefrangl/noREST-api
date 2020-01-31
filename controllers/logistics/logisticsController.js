@@ -68,7 +68,7 @@ exports.createApi = async ctx => {
     if (exists || pluralExists) {
       ctx.body = 'An api with this name already exists.';
       return ctx.status = 202;
-    } else if (forbiddenNames.includes(data.user.name) || data.user.name[0] === '-' || data.user.name.includes(' ') || /[0-9]/.test(data.user.name[0])) {
+    } else if (forbiddenNames.includes(data.api.name) || data.api.name[0] === '-' || data.api.name.includes(' ') || /[0-9]/.test(data.api.name[0])) {
       ctx.body = 'Please choose a valid name for your api.';
       return ctx.status = 400;
     } else {
@@ -160,15 +160,17 @@ exports.getUserApis = async ctx => {
 exports.updateApi = async ctx => {
   const oldApiName = ctx.params.api_name;
   const data = ctx.request.body;
+  console.log(data);
 
   // check that the api exists
   const oldNameExists = await redis.get(redisPrefix + oldApiName);
 
   if (data.api_fields) {
+    console.log('hola');
     const updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
     if (updatedFields) {
       ctx.body = updatedFields;
-      return ctx.status = 200;
+      ctx.status = 200;
     }
   }
 
@@ -187,7 +189,7 @@ exports.updateApi = async ctx => {
 
     // if the client wants to change the api name
     if (newApiName) {
-
+      console.log(newApiName);
       // to check if the new api name is already being used
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
@@ -199,10 +201,13 @@ exports.updateApi = async ctx => {
       const db = mongoose.connection.db;
       let pluralOldApiName = oldApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
       if (oldApiName[oldApiName.length - 1] !== 's') pluralOldApiName = oldApiName + 's';
+      console.log('bfeore');
+      console.log(pluralOldApiName);
       const renamed = await db.collection(pluralOldApiName).rename(newApiName + 's');
 
       // if the rename worked, change the model name in the model file and rename the file itself
       if (renamed) {
+        console.log('im renamed');
         const oldFile = await readFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`);
         const oldModelInstantiation = `mongoose.model('${oldApiName.toLowerCase()}', `;
         const newModelInstantiation = `mongoose.model('${newApiName.toLowerCase()}', `;
@@ -212,8 +217,11 @@ exports.updateApi = async ctx => {
 
         await renameFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`, `models/api/${newApiName.toLowerCase()}Model.js`);
 
+        console.log('hello');
+
         // rename the redis key and save that value
         await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
+        console.log('goodbye');
         redisName = redisPrefix + newApiName;
       }
     }
@@ -229,11 +237,20 @@ exports.updateApi = async ctx => {
 
     if (Object.prototype.hasOwnProperty.call(data, 'public') || data.api_key || data.api_secret_key) await redis.set(redisName, `${newPublic}:${newApiKey}:${newApiSecretKey}`);
 
+    let mongooseObj = {};
+    for (let key in data) {
+      if (data[key] !== '' && key !== 'api_fields') mongooseObj[key] = data[key];
+    }
+
+    if (data.api_description) {
+      mongooseObj.description = data.api_description;
+    }
+
     // do separate quieries for general update and push
 
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;
-    const result = await ApiModel.findOneAndUpdate({ api_name: mongooseModelName }, data, { new: true });
+    const result = await ApiModel.findOneAndUpdate({ api_name: mongooseModelName }, mongooseObj, { new: true });
     if (result) {
       ctx.body = result;
       ctx.status = 200;
