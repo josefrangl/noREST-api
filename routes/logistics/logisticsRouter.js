@@ -15,5 +15,6 @@ logisticsRouter.get('/logistics/api/:api_name', logisticsController.getApi);
 logisticsRouter.post('/logistics/api', logisticsController.createApi);
 logisticsRouter.put('/logistics/api/:api_name', logisticsController.updateApi);
 logisticsRouter.del('/logistics/api/:api_name', logisticsController.deleteApi);
+logisticsRouter.del('/logistics/data/api/:api_name', logisticsController.deleteApiData);
 
 module.exports = logisticsRouter;

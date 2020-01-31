@@ -119,7 +119,7 @@ exports.getApi = async ctx => {
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
-      ctx.body = 'No APIs found with that name.';
+      ctx.body = `No APIs found with name: ${apiName}.`;
       ctx.status = 200;
     } else {
       const api = await ApiModel.findOne({ api_name: apiName });
@@ -262,6 +262,27 @@ exports.deleteApi = async ctx => {
     // eslint-disable-next-line no-console
     console.log('Error deleting API: ', error);
     ctx.body = 'Error deleting API from database.';
+    ctx.status = 503;
+  }
+};
+
+exports.deleteApiData = async (ctx) => {
+  const apiName = ctx.params.api_name.toLowerCase();
+  const model = require(`../../models/api/${apiName}Model.js`);
+  try {
+    const exists = await redis.get(redisPrefix + apiName);
+    if (!exists) {
+      ctx.body = `No APIs found with name: ${apiName}.`;
+      ctx.status = 200;
+    } else {
+      const deleted = await model.deleteMany({});
+      ctx.body = deleted;
+      ctx.status = 200;
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Error deleting data from API: ', apiName);
+    ctx.body = 'Error deleting API data from database.';
     ctx.status = 503;
   }
 };
