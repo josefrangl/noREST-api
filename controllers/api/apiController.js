@@ -28,6 +28,25 @@ exports.getByFieldAndValue = async ctx => {
   const value = ctx.params.value;
   const model = require(`../../models/api/${apiName}Model.js`);
 
+  // get query param for db -> could be gt or lte or startswith etc
+  let { match } = ctx.query;
+
+  if (match) {
+    let resolvedQuery;
+    if (match === 'startswith') {
+      resolvedQuery = await model.find().where(field).regex(`^${value}`);
+    } else if (match === 'endswith') {
+      resolvedQuery = await model.find().where(field).regex(`${value}$`);
+    } else if (match === 'includes') {
+      resolvedQuery = await model.find().where(field).regex(value);
+    } else {
+      match = '$' + match;
+      resolvedQuery = await model.regex({ [field]: { [match]: value } });
+    }
+    ctx.body = resolvedQuery;
+    return ctx.status = 200;
+  }
+
   try {
     const results = await model.find({ [field]: value });
     ctx.body = results;
