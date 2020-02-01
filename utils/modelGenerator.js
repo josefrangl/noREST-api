@@ -14,7 +14,7 @@ exports.createModel = async (data) =>  {
 
   data.api.fields.forEach(elem => {
     txtMiddleModel +=
-      `\t${elem.field_name}: {
+      `\t"${elem.field_name}": {
         type: ${elem.field_type},
         allowNull: ${elem.allow_null},
         ${elem.default_value ? 'default: '+ `'${elem.default_value}'`+',' : '' }
