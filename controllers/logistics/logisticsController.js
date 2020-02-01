@@ -164,10 +164,21 @@ exports.updateApi = async ctx => {
   const data = ctx.request.body;
 
   // check that the api exists
-  const oldNameExists = await redis.get(redisPrefix + oldApiName);
+  const oldName = await redis.get(redisPrefix + oldApiName);
+  console.log(oldName);
+
+  if (!oldName) {
+    ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
+    return ctx.status = 202;
+  }
 
   if (data.api_fields) {
-    const updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
+    let updatedFields;
+    if (data.api_fields.length === 1) {
+      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
+    } else {
+      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: { $each: data.api_fields }} }, { new: true });
+    }
     if (updatedFields) {
       ctx.body = updatedFields;
       ctx.status = 200;
@@ -176,15 +187,12 @@ exports.updateApi = async ctx => {
 
   const newApiName = data.api_name;
 
-  if (!oldNameExists) {
-    ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
-    ctx.status = 202;
-  }
 
   // to get the values saved in redis
-  let redisName = redisPrefix + oldApiName;
-  const redisValue = await redis.get(redisName);
-  const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
+  const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
+
+  // will be used later
+  let redisName = oldName;
   try {
 
     // if the client wants to change the api name
@@ -193,7 +201,7 @@ exports.updateApi = async ctx => {
       const newNameExists = await redis.get(redisPrefix + newApiName);
       if (newNameExists) { // or plural exists
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
-        ctx.status = 202;
+        return ctx.status = 202;
       }
 
       // to change model name in mongodb
@@ -235,12 +243,6 @@ exports.updateApi = async ctx => {
       if (data[key] !== '' && key !== 'api_fields') mongooseObj[key] = data[key];
     }
 
-    if (data.api_description) {
-      mongooseObj.description = data.api_description;
-    }
-
-    // do separate quieries for general update and push
-
     // update the mongoose model fields
     const mongooseModelName = oldApiName || newApiName;
     const result = await ApiModel.findOneAndUpdate({ api_name: mongooseModelName }, mongooseObj, { new: true });
@@ -254,7 +256,7 @@ exports.updateApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error updating ${oldApiName} API to be ${newApiName}`, error);
-    ctx.body = `Error udpating ${oldApiName} API to be ${newApiName}`;
+    ctx.body = `Error udpating ${oldApiName} API to be ${newApiName}. Please check that your API has data.`;
     ctx.status = 500;
   }
 };
