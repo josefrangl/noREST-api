@@ -88,14 +88,6 @@ exports.createApi = async ctx => {
           api_fields: data.api.fields
         });
 
-        // we insert a blank document into the collection (model) so that mongo creates the collection.
-        // else the collection won't be created in mongo until the first document insertion.
-        const apiName = data.api.name.toLowerCase();
-        const model = require(`../../models/api/${apiName}Model.js`);
-        
-        // Commented out for presentation
-        // await model.create({});
-
         ctx.body = api;
         ctx.status = 201;
       }
@@ -165,7 +157,6 @@ exports.updateApi = async ctx => {
 
   // check that the api exists
   const oldName = await redis.get(redisPrefix + oldApiName);
-  console.log(oldName);
 
   if (!oldName) {
     ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
@@ -203,15 +194,26 @@ exports.updateApi = async ctx => {
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 202;
       }
+      
+      const model = require(`../../models/api/${oldApiName}Model.js`);
+      // const model = require(`../../models/api/${oldName}Model.js`);
+
+      const apiData = await model.find({});
+      let renamed;
+
+      // if the model is created but there is no data inside
+
+      if (apiData.length > 0) {
+        const db = mongoose.connection.db;
+        let pluralOldApiName = oldApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
+        if (oldApiName[oldApiName.length - 1] !== 's') pluralOldApiName = oldApiName + 's';
+        renamed = await db.collection(pluralOldApiName).rename(newApiName + 's');
+      }
 
       // to change model name in mongodb
-      const db = mongoose.connection.db;
-      let pluralOldApiName = oldApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
-      if (oldApiName[oldApiName.length - 1] !== 's') pluralOldApiName = oldApiName + 's';
-      const renamed = await db.collection(pluralOldApiName).rename(newApiName + 's');
 
       // if the rename worked, change the model name in the model file and rename the file itself
-      if (renamed) {
+      if (apiData.length === 0 || renamed) {
         const oldFile = await readFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`);
         const oldModelInstantiation = `mongoose.model('${oldApiName.toLowerCase()}', `;
         const newModelInstantiation = `mongoose.model('${newApiName.toLowerCase()}', `;
@@ -226,10 +228,6 @@ exports.updateApi = async ctx => {
         redisName = redisPrefix + newApiName;
       }
     }
-
-    // update the fields when new ones are added
-    // have to do it separately as it is a subdocument
-
 
     // update the value associated with the (potentially updated) key in redis
     const newPublic = data.public || oldPublic;
