@@ -7,7 +7,7 @@ const logisticsController = require('../../controllers/logistics/logisticsContro
 logisticsRouter.post('/logistics/api/verify', logisticsController.verifyApiName);
 
 // generate new API keys
-logisticsRouter.get('/logistics/api/keys', logisticsController.generateNewApiKeys);
+logisticsRouter.get('/logistics/api/:api_name/keys', logisticsController.generateNewApiKeys);
 
 // gets all APIs for all users
 logisticsRouter.get('/logistics/admin/api', logisticsController.adminGetAllApi); // admin only
