@@ -178,7 +178,6 @@ exports.updateApi = async ctx => {
 
   const newApiName = data.api_name;
 
-
   // to get the values saved in redis
   const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
 
@@ -194,8 +193,9 @@ exports.updateApi = async ctx => {
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 202;
       }
-      
-      const model = require(`../../models/api/${oldApiName}Model.js`);
+       
+      const model = require(`../../models/api/${oldApiName.toLowerCase()}Model.js`); 
+      // - to lowercase
       // const model = require(`../../models/api/${oldName}Model.js`);
 
       const apiData = await model.find({});
@@ -205,9 +205,15 @@ exports.updateApi = async ctx => {
 
       if (apiData.length > 0) {
         const db = mongoose.connection.db;
-        let pluralOldApiName = oldApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
-        if (oldApiName[oldApiName.length - 1] !== 's') pluralOldApiName = oldApiName + 's';
-        renamed = await db.collection(pluralOldApiName).rename(newApiName + 's');
+      
+        let pluralOldApiName = oldApiName;
+        let pluralNewApiName = newApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
+        if (oldApiName[oldApiName.length - 1] !== 's' && !/[0-9]/.test(oldApiName[oldApiName.length - 1])) {
+  
+          pluralOldApiName = oldApiName + 's';
+          pluralNewApiName = newApiName + 's';
+        }
+        renamed = await db.collection(pluralOldApiName.toLowerCase()).rename(pluralNewApiName.toLowerCase());
       }
 
       // to change model name in mongodb
@@ -215,17 +221,23 @@ exports.updateApi = async ctx => {
       // if the rename worked, change the model name in the model file and rename the file itself
       if (apiData.length === 0 || renamed) {
         const oldFile = await readFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`);
-        const oldModelInstantiation = `mongoose.model('${oldApiName.toLowerCase()}', `;
-        const newModelInstantiation = `mongoose.model('${newApiName.toLowerCase()}', `;
+        const oldModelInstantiation = `mongoose.model('${oldApiName}', `;
+        const newModelInstantiation = `mongoose.model('${newApiName}', `;
         const replacedData = oldFile.toString().replace(oldModelInstantiation, newModelInstantiation);
 
-        await writeFileAsync(`models/api/${oldApiName}Model.js`, replacedData);
+        if (JSON.stringify(oldFile) !== JSON.stringify(replacedData)) {
+          await writeFileAsync(`models/api/${oldApiName}Model.js`, replacedData);
 
-        await renameFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`, `models/api/${newApiName.toLowerCase()}Model.js`);
+          await renameFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`, `models/api/${newApiName.toLowerCase()}Model.js`);
 
-        // rename the redis key and save that value
-        await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
-        redisName = redisPrefix + newApiName;
+          // rename the redis key and save that value
+          await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
+          redisName = redisPrefix + newApiName;
+        } else {
+          ctx.body = { error: 'Could not update mongoose model' }; // perhaps could validate this in the front end with the api/validate endpoint?
+          return ctx.status = 202;
+        }
+
       }
     }
 
