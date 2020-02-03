@@ -341,3 +341,16 @@ exports.generateNewApiKeys = async (ctx) => {
     ctx.status = 503;
   }
 };
+
+exports.getPublicApis = async (ctx) => { 
+  try {
+    const apiList = await ApiModel.find( { public: true });
+    ctx.body = apiList;
+    ctx.status = 200;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Error fetching all public APIs for admin: ', error);
+    ctx.body = { error: 'fetching all public APIs for admin' };
+    ctx.status = 400;
+  }
+};
