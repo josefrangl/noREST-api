@@ -348,7 +348,7 @@ exports.generateNewApiKeys = async (ctx) => {
 
 exports.getPublicApis = async (ctx) => { 
   try {
-    const apiList = await ApiModel.find( { public: true });
+    const apiList = await ApiModel.find( { public: true }).select('-api_key -api_secret_key');
     ctx.body = apiList;
     ctx.status = 200;
   } catch (error) {
