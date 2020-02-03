@@ -35,7 +35,7 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
     pluralExists = await redis.get(redisPrefix + data.name.slice(-1));
   }
   if (exists || pluralExists) {
-    ctx.body = { error: 'An api with this name already exists' };
+    ctx.body = { error: 'An api with this name already exists.' };
     ctx.status = 202;
   } else if (!exists) {
     ctx.body = data.name;
@@ -49,7 +49,7 @@ exports.createApi = async ctx => {
   const data = ctx.request.body;
 
   if (!data.user || !data.api.name || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
-    ctx.body = 'Check your input, one field is missing.';
+    ctx.body = { error: 'Check your input, one field is missing.' };
     ctx.status = 202;
   }
 
@@ -95,7 +95,7 @@ exports.createApi = async ctx => {
 
   } catch (error) {
     console.error('Error saving api to the database: ', error);
-    ctx.body = 'Error saving api to the database';
+    ctx.body = { error: 'Error saving api to the database' };
     ctx.status = 400;
   }
 };
@@ -108,6 +108,7 @@ exports.adminGetAllApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error fetching all APIs for admin: ', error);
+    ctx.body = { error: 'fetching all APIs for admin' };
     ctx.status = 400;
   }
 };
@@ -127,7 +128,7 @@ exports.getApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error fetching API: ', error);
-    ctx.body = 'Error fetching API from database.';
+    ctx.body = { error: 'Error fetching API from database.' };
     ctx.status = 503;
   }
 };
@@ -141,12 +142,12 @@ exports.getUserApis = async ctx => {
     if (userApis) {
       ctx.body = userApis;
     } else {
-      ctx.body = 'No APIs found for that user.';
+      ctx.body = { error: 'No APIs found for that user.' };
       ctx.status = 204;
     }
   } catch (error) {
     console.error('Error fetching user APIs: ', error);
-    ctx.body = 'Error fetching user APIs from database.';
+    ctx.body = { error: 'Error fetching user APIs from database.'};
     ctx.status = 503;
   }
 };
@@ -195,14 +196,12 @@ exports.updateApi = async ctx => {
       }
        
       const model = require(`../../models/api/${oldApiName.toLowerCase()}Model.js`); 
-      // - to lowercase
       // const model = require(`../../models/api/${oldName}Model.js`);
 
       const apiData = await model.find({});
       let renamed;
 
       // if the model is created but there is no data inside
-
       if (apiData.length > 0) {
         const db = mongoose.connection.db;
       
@@ -213,10 +212,10 @@ exports.updateApi = async ctx => {
           pluralOldApiName = oldApiName + 's';
           pluralNewApiName = newApiName + 's';
         }
+        // to change model name in mongodb
         renamed = await db.collection(pluralOldApiName.toLowerCase()).rename(pluralNewApiName.toLowerCase());
       }
 
-      // to change model name in mongodb
 
       // if the rename worked, change the model name in the model file and rename the file itself
       if (apiData.length === 0 || renamed) {
@@ -234,7 +233,7 @@ exports.updateApi = async ctx => {
           await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
           redisName = redisPrefix + newApiName;
         } else {
-          ctx.body = { error: 'Could not update mongoose model' }; // perhaps could validate this in the front end with the api/validate endpoint?
+          ctx.body = { error: 'Could not update mongoose model.' }; // perhaps could validate this in the front end with the api/validate endpoint?
           return ctx.status = 202;
         }
 
@@ -266,7 +265,7 @@ exports.updateApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error updating ${oldApiName} API to be ${newApiName}`, error);
-    ctx.body = `Error udpating ${oldApiName} API to be ${newApiName}. Please check that your API has data.`;
+    ctx.body = { error: `Error udpating ${oldApiName} API to be ${newApiName}. Please check that your API has data.` };
     ctx.status = 500;
   }
 };
@@ -286,7 +285,7 @@ exports.deleteApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error deleting API: ', error);
-    ctx.body = 'Error deleting API from database.';
+    ctx.body = { error: 'Error deleting API from database.' };
     ctx.status = 503;
   }
 };
@@ -307,7 +306,7 @@ exports.deleteApiData = async (ctx) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error deleting data from API: ', apiName);
-    ctx.body = 'Error deleting API data from database.';
+    ctx.body = { error: 'Error deleting API data from database.' };
     ctx.status = 503;
   }
 };

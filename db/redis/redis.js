@@ -9,7 +9,7 @@ const client = redis.createClient(redisUrl);
 
 client.on('connect', () => {
   // eslint-disable-next-line no-console
-  console.log('💾 Redis is connected!!');
+  console.log('💾: Redis is connected!!');
 });
 
 

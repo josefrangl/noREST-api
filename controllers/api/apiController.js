@@ -17,7 +17,7 @@ exports.getAll = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error in getting all values from DB for: ${apiName} API`, error);
-    ctx.body = `Error in getting all values from DB for: ${apiName} API`;
+    ctx.body = { error: `Error in getting all values from DB for: ${apiName} API` };
     ctx.status = 500;
   }
 };
@@ -54,7 +54,7 @@ exports.getByFieldAndValue = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error in getting value by field from DB for: ${apiName} API`, error);
-    ctx.body = `Error in getting value by field from DB for: ${apiName} API`;
+    ctx.body = { error: `Error in getting value by field from DB for: ${apiName} API` };
     ctx.status = 500;
   }
 };
@@ -71,7 +71,7 @@ exports.postData = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error inserting data into DB for: ${apiName} API`, error);
-    ctx.body = `Error inserting data into DB for: ${apiName} API`;
+    ctx.body = { error: `Error inserting data into DB for: ${apiName} API` };
     ctx.status = 500;
   }
 };
@@ -94,7 +94,7 @@ exports.updateRecord = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error updating record ${recordId} from DB for: ${apiName} API`, error);
-    ctx.body = `Error udpating record ${recordId} from DB for: ${apiName} API`;
+    ctx.body = { error: `Error udpating record ${recordId} from DB for: ${apiName} API` };
     ctx.status = 500;
   }
 };
@@ -117,7 +117,7 @@ exports.deleteRecord = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error deleting record from DB for: ${apiName} API`, error);
-    ctx.body = `Error deleting record from DB for: ${apiName} API`;
+    ctx.body = { error: `Error deleting record from DB for: ${apiName} API` };
     ctx.status = 500;
   }
 };

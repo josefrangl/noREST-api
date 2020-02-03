@@ -7,7 +7,7 @@ exports.createModel = async (data) =>  {
   const apiName = data.api.name;
   const modelName = apiName[0].toUpperCase() + apiName.slice(1).toLowerCase();
 
-  const txtImportMongoose = 'const mongoose = require("../../db/mongodb/mongodb.js");\n\n';
+  const txtImportMongoose = 'const mongoose = require(\'../../db/mongodb/mongodb.js\');\n\n';
   const txtBeginModel = `const ${modelName} = mongoose.model('${apiName}', {\n`;
 
   let txtMiddleModel = '';
@@ -15,10 +15,10 @@ exports.createModel = async (data) =>  {
   data.api.fields.forEach(elem => {
     txtMiddleModel +=
       `\t"${elem.field_name}": {
-        type: ${elem.field_type},
-        allowNull: ${elem.allow_null},
-        ${elem.default_value ? 'default: '+ `'${elem.default_value}'`+',' : '' }
-        },\n`;
+      type: ${elem.field_type},
+      allowNull: ${elem.allow_null},
+      ${elem.default_value ? 'default: '+ `'${elem.default_value}'`+',' : '' }
+      },\n`;
   });
 
   const txtEndModel = '});\n\n';

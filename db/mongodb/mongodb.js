@@ -15,7 +15,7 @@ mongoose.connect(url, connectionOptions);
 
 mongoose.connection.once('open', () => {
   // eslint-disable-next-line no-console
-  console.log(`🦌 Connected to mongo at ${url}`);
+  console.log(`🦌: Connected to mongo at ${url}`);
 });
 
 module.exports = mongoose;
