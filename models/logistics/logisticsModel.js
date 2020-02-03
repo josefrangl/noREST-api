@@ -50,12 +50,12 @@ const ApiModel = mongoose.model('apis', {
   date_created: {
     type: Date,
     allownull: false,
-    default: Date.now() // or new Date.now? -jf
+    default: Date.now()
   },
   date_last_updated: {
     type: Date,
     allownull: false,
-    default: Date.now() // or new Date.now? -jf
+    default: Date.now()
   }
 });
 

@@ -6,15 +6,20 @@ const logisticsController = require('../../controllers/logistics/logisticsContro
 // gets all users APIs
 logisticsRouter.get('/logistics/admin/api', logisticsController.adminGetAllApi); // admin only
 
-// gets all APIs owned by a given user
-logisticsRouter.get('/logistics/api/user/:user_id', logisticsController.getUserApis);
-
-// CRuD a certain API.
-logisticsRouter.post('/logistics/api/verify', logisticsController.verifyApiName);
+// get API from our database
 logisticsRouter.get('/logistics/api/:api_name', logisticsController.getApi);
+
+// create, update, delete and delete data from API
 logisticsRouter.post('/logistics/api', logisticsController.createApi);
 logisticsRouter.put('/logistics/api/:api_name', logisticsController.updateApi);
 logisticsRouter.del('/logistics/api/:api_name', logisticsController.deleteApi);
 logisticsRouter.del('/logistics/data/api/:api_name', logisticsController.deleteApiData);
+
+
+// gets all APIs owned by a given user
+logisticsRouter.get('/logistics/api/user/:user_id', logisticsController.getUserApis);
+
+// verify an API name
+logisticsRouter.post('/logistics/api/verify', logisticsController.verifyApiName);
 
 module.exports = logisticsRouter;

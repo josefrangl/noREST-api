@@ -16,7 +16,7 @@ const signup = async (ctx) => {
   try {
     const user = await redis.get(redisPrefix + email);
     if (user) {
-      ctx.body = { error: 'This email is already registered.' }; // be less sepcific
+      ctx.body = { error: 'This email is already registered.' };
       ctx.status = 202;
     } else {
       const redisUser = await redis.set(redisPrefix + email, hashPassword);
@@ -39,14 +39,14 @@ const signup = async (ctx) => {
         ctx.status = 200;
 
       } else {
-        ctx.body = 'Could not set user in Redis';
+        ctx.body = { error: 'Could not set user in Redis.' };
         ctx.status = 503;
       }
 
     }
   } catch (error) {
     console.error('Error creating user: ', error);
-    ctx.body = 'Error creating user in database.';
+    ctx.body = { error: 'Error creating user in database.' };
     ctx.status = 503;
   }
 };
@@ -80,7 +80,7 @@ const login = async (ctx) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error logging in user: ', error);
-    ctx.body = 'Error logging user in database.';
+    ctx.body = { error: 'Error logging user in database.' };
     ctx.status = 503;
   }
 };
@@ -123,7 +123,7 @@ const editUser = async (ctx) => {
     }
   } catch (error) {
     console.error(`Error updating details for user: ${email}.`, error);
-    ctx.body = 'Error updating user details.';
+    ctx.body = { error: 'Error updating user details.' };
     ctx.status = 503;
   }
 };
@@ -156,7 +156,7 @@ const forgotPassword = async (ctx) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error resetting password for user: ${email}.`, error);
-    ctx.body = 'Error resetting password';
+    ctx.body = { error: 'Error resetting password' };
     ctx.status = 503;
   }
 };
@@ -186,7 +186,7 @@ const deleteUser = async (ctx) => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error deleting user: ${id}.`, error);
-    ctx.body = 'Error deleting user.';
+    ctx.body = { error: 'Error deleting user.' };
     ctx.status = 503;
   }
 };
