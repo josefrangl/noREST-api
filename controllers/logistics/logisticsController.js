@@ -312,14 +312,28 @@ exports.deleteApiData = async (ctx) => {
 };
 
 exports.generateNewApiKeys = async (ctx) => {
-  const apiKey = uuidv1();
-  const apiSecretKey = crypto.randomBytes(32).toString('hex');
+  const apiName = ctx.params.api_name;
+  const newApiKey = uuidv1();
+  const newApiSecretKey = crypto.randomBytes(32).toString('hex');
+
+  const keysObj = {
+    api_key: newApiKey,
+    api_secret_key: newApiSecretKey
+  };
+  
   try {
-    ctx.body = {
-      api_key: apiKey,
-      api_secret_key: apiSecretKey
-    };
-    ctx.status = 202;
+    const redisName = await redis.get(redisPrefix + apiName);
+    if (!redisName) {
+      ctx.body = { error: `No APIs found with name: ${apiName}.` };
+      ctx.status = 202;
+    } else {
+      const oldPublic = redisName.split(':')[0];
+      await redis.set(redisPrefix + apiName, `${oldPublic}:${newApiKey}:${newApiSecretKey}`);
+      const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, keysObj, { new: true });
+      ctx.body = result;
+      ctx.status = 202;
+
+    }
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log('Error creating new api keys');
