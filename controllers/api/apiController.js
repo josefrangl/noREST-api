@@ -6,7 +6,10 @@
 ## is not in lowercase. (maybe this should be refined idk)
 */
 
-const csvtojson = require('csvjson');
+const csvtojson = require('csvtojson');
+const fs = require('fs');
+const { promisify } = require('util');
+const unlinkAsync = promisify(fs.unlink); 
 
 exports.getAll = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
@@ -124,20 +127,29 @@ exports.deleteRecord = async ctx => {
   }
 };
 
+
 exports.uploadFile = async ctx => {
   const apiName = ctx.params.api_name;
   const model = require(`../../models/api/${apiName}Model.js`);
-  const csv = ctx.request.body;
-
-  console.log(ctx);
-  console.log(csv);
+  const filePath = ctx.files[0].path;  
 
   try {
-    const json = await csvtojson.toObject(csv);
+    const json = await csvtojson().fromFile(filePath);
+
     if (json) {
-      const results = model.create(json);
-      ctx.body = results;
-      ctx.status = 200;
+      // have to replace TRUE and FALSE otherwise mongoose will bnot be able to read boolean values
+      const string = JSON.stringify(json);
+      const replaced = string.replace('TRUE', 'true').replace('FALSE', 'false');
+      const parsed = JSON.parse(replaced);
+      const results = await model.create(parsed);
+      if (results) {
+        await unlinkAsync(filePath);
+        ctx.body = results;
+        ctx.status = 200;
+      } else { 
+        ctx.body = { error: `Could not save file to database for ${apiName} API` };
+        ctx.status = 500;
+      }
     } else {
       ctx.body = { error: `Could not convert file to JSON for ${apiName} API` };
       ctx.status = 500;
