@@ -310,3 +310,20 @@ exports.deleteApiData = async (ctx) => {
     ctx.status = 503;
   }
 };
+
+exports.generateNewApiKeys = async (ctx) => {
+  const apiKey = uuidv1();
+  const apiSecretKey = crypto.randomBytes(32).toString('hex');
+  try {
+    ctx.body = {
+      api_key: apiKey,
+      api_secret_key: apiSecretKey
+    };
+    ctx.status = 202;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Error creating new api keys');
+    ctx.body = { error: 'Error creating new api keys' };
+    ctx.status = 503;
+  }
+};
