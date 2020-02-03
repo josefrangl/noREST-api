@@ -275,9 +275,13 @@ exports.deleteApi = async ctx => {
   try {
     await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
+    const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
     if (api) {
-      ctx.body = api;
-      ctx.status = 200;
+      const deleted = model.collection.drop();
+      if (deleted) {
+        ctx.body = api;
+        ctx.status = 200;
+      }
     } else {
       ctx.body = { error: 'No APIs found with that name.' };
       ctx.status = 202;
