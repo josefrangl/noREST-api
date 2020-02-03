@@ -9,13 +9,14 @@ logisticsRouter.post('/logistics/api/verify', logisticsController.verifyApiName)
 // generate new API keys
 logisticsRouter.get('/logistics/api/:api_name/keys', logisticsController.generateNewApiKeys);
 
-// gets all APIs for all users
+// gets all APIs for all users and all public APIs
 logisticsRouter.get('/logistics/admin/api', logisticsController.adminGetAllApi); // admin only
+logisticsRouter.get('/logistics/public', logisticsController.getPublicApis); // admin only
 
 // gets all APIs owned by a given user
 logisticsRouter.get('/logistics/api/user/:user_id', logisticsController.getUserApis);
 
-// get API from our database
+// gets one API from our database
 logisticsRouter.get('/logistics/api/:api_name', logisticsController.getApi);
 
 // create, update, delete and delete data from API
