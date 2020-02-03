@@ -335,7 +335,7 @@ exports.generateNewApiKeys = async (ctx) => {
       await redis.set(redisPrefix + apiName, `${oldPublic}:${newApiKey}:${newApiSecretKey}`);
       const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, keysObj, { new: true });
       ctx.body = result;
-      ctx.status = 202;
+      ctx.status = 200;
 
     }
   } catch (error) {
