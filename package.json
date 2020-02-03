@@ -21,6 +21,7 @@
   "dependencies": {
     "@koa/cors": "^3.0.0",
     "bcrypt": "^3.0.7",
+    "csvjson": "^5.1.0",
     "dotenv": "^8.2.0",
     "file-system": "^2.2.2",
     "jsonwebtoken": "^8.5.1",

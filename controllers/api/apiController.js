@@ -6,6 +6,8 @@
 ## is not in lowercase. (maybe this should be refined idk)
 */
 
+const csvtojson = require('csvjson');
+
 exports.getAll = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const model = require(`../../models/api/${apiName}Model.js`);
@@ -118,6 +120,32 @@ exports.deleteRecord = async ctx => {
     // eslint-disable-next-line no-console
     console.log(`Error deleting record from DB for: ${apiName} API`, error);
     ctx.body = { error: `Error deleting record from DB for: ${apiName} API` };
+    ctx.status = 500;
+  }
+};
+
+exports.uploadFile = async ctx => {
+  const apiName = ctx.params.api_name;
+  const model = require(`../../models/api/${apiName}Model.js`);
+  const csv = ctx.request.body;
+
+  console.log(ctx);
+  console.log(csv);
+
+  try {
+    const json = await csvtojson.toObject(csv);
+    if (json) {
+      const results = model.create(json);
+      ctx.body = results;
+      ctx.status = 200;
+    } else {
+      ctx.body = { error: `Could not convert file to JSON for ${apiName} API` };
+      ctx.status = 500;
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(`Error uploading csv file for ${apiName} API`, error);
+    ctx.body = { error: `Error uploading csv file for ${apiName} API` };
     ctx.status = 500;
   }
 };
