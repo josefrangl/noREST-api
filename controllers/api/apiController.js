@@ -131,9 +131,10 @@ exports.deleteRecord = async ctx => {
 exports.uploadFile = async ctx => {
   const apiName = ctx.params.api_name;
   const model = require(`../../models/api/${apiName}Model.js`);
-  const filePath = ctx.files[0].path;  
+  const filePath = ctx.files[0].path;
 
   try {
+
     const json = await csvtojson().fromFile(filePath);
 
     if (json) {
