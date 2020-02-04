@@ -4,7 +4,7 @@ const writeFileAsync = promisify(fs.writeFile);
 
 exports.createModel = async (data) =>  {
 
-  const apiName = data.api.name;
+  const apiName = data.api.name.toLowerCase();
   const modelName = apiName[0].toUpperCase() + apiName.slice(1).toLowerCase();
 
   const txtImportMongoose = 'const mongoose = require(\'../../db/mongodb/mongodb.js\');\n\n';
@@ -33,5 +33,5 @@ exports.createModel = async (data) =>  {
     // eslint-disable-next-line no-console
     else console.log(`Created Model: '${modelName}', for API: '${apiName}'!`);
   });
-  return 'model created';
+  // return 'model created';
 };

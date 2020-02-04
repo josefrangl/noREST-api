@@ -18,27 +18,26 @@ const redisPrefix = 'api-';
 const forbiddenNames = ['api', 'apis', 'user', 'users', 'break', 'case', 'catch', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'finally', 'for', 'function', 'if', 'in', 'instanceof', 'new', 'return', 'switch', 'this', 'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'NAN'];
 
 exports.verifyApiName = async ctx => { // put this in a helper functio in utils
-  const data = ctx.request.body;
-
+  const apiName = ctx.request.body.name.toLowerCase();
   let pluralExists;
 
-  if (!data.name) {
+  if (!apiName) {
     ctx.body = { error: 'Please send an api name.' };
     ctx.status = 400;
-  } else if (forbiddenNames.includes(data.name) || data.name[0] === '-' || data.name.includes(' ') || /[0-9]/.test(data.name[0])) { // so that api names are valid javascript variables
+  } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) { // so that api names are valid javascript variables
     ctx.body = { error: 'Please choose a valid name for your api.' };
     ctx.status = 202; 
   }
-  const exists = await redis.get(redisPrefix + data.name);
+  const exists = await redis.get(redisPrefix + apiName);
   // so that we do not overwrite an existing model as mongoose by default creates a collection with the plural of the model name (if it doesn't end in an s)
-  if (data.name[data.name.length - 1] === 's') {
-    pluralExists = await redis.get(redisPrefix + data.name.slice(-1));
+  if (apiName[apiName.length - 1] === 's') {
+    pluralExists = await redis.get(redisPrefix + apiName.slice(-1));
   }
   if (exists || pluralExists) {
     ctx.body = { error: 'An api with this name already exists.' };
     ctx.status = 202;
   } else if (!exists) {
-    ctx.body = data.name;
+    ctx.body = apiName;
     ctx.status = 200;
   }
 };
@@ -47,8 +46,9 @@ exports.verifyApiName = async ctx => { // put this in a helper functio in utils
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
+  const apiName = data.api.name.toLowerCase();
 
-  if (!data.user || !data.api.name || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
+  if (!data.user || !apiName || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = { error: 'Check your input, one field is missing.' };
     ctx.status = 202;
   }
@@ -60,15 +60,15 @@ exports.createApi = async ctx => {
   let pluralExists;
 
   try {
-    const exists = await redis.get(redisPrefix + data.api.name);
+    const exists = await redis.get(redisPrefix + apiName);
     // same logic as above ^^
-    if (data.api.name[data.api.name.length - 1] === 's') {
-      pluralExists = await redis.get(redisPrefix + data.api.name.slice(0, -1));
+    if (apiName[apiName.length - 1] === 's') {
+      pluralExists = await redis.get(redisPrefix + apiName.slice(0, -1));
     }
     if (exists || pluralExists) {
       ctx.body = { error :'An api with this name already exists.' };
       ctx.status = 202;
-    } else if (forbiddenNames.includes(data.api.name) || data.api.name[0] === '-' || data.api.name.includes(' ') || /[0-9]/.test(data.api.name[0])) {
+    } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) {
       ctx.body = { error: 'Please choose a valid name for your api.' };
       // note I jose fran changed this from 400 to 202, correct is 204, however 
       // for error handling in the frontend (until validation is done) 
@@ -76,10 +76,10 @@ exports.createApi = async ctx => {
       ctx.status = 202;
     } else {
       await createModel(data);
-      const redisApi = await redis.set(redisPrefix + data.api.name, `${data.api.public}:${apiKey}:${apiSecretKey}`);
+      const redisApi = await redis.set(redisPrefix + apiName, `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
         const api = await ApiModel.create({
-          api_name: data.api.name,
+          api_name: apiName,
           description: data.api.description,
           user: data.user.id,
           public: data.api.public,
@@ -114,7 +114,7 @@ exports.adminGetAllApi = async ctx => {
 };
 
 exports.getApi = async ctx => {
-  const apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name.toLowerCase();
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
@@ -153,7 +153,7 @@ exports.getUserApis = async ctx => {
 };
 
 exports.updateApi = async ctx => {
-  const oldApiName = ctx.params.api_name;
+  const oldApiName = ctx.params.api_name.toLowerCase();
   const data = ctx.request.body;
 
   // check that the api exists
@@ -177,7 +177,7 @@ exports.updateApi = async ctx => {
     }
   }
 
-  const newApiName = data.api_name;
+  const newApiName = data.api_name.toLowerCase();
 
   // to get the values saved in redis
   const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
@@ -195,7 +195,7 @@ exports.updateApi = async ctx => {
         return ctx.status = 202;
       }
        
-      const model = require(`../../models/api/${oldApiName.toLowerCase()}Model.js`); 
+      const model = require(`../../models/api/${oldApiName}Model.js`); 
 
       const apiData = await model.find({});
       let renamed;
@@ -212,13 +212,13 @@ exports.updateApi = async ctx => {
           pluralNewApiName = newApiName + 's';
         }
         // to change model name in mongodb
-        renamed = await db.collection(pluralOldApiName.toLowerCase()).rename(pluralNewApiName.toLowerCase());
+        renamed = await db.collection(pluralOldApiName).rename(pluralNewApiName);
       }
 
 
       // if the rename worked, change the model name in the model file and rename the file itself
       if (apiData.length === 0 || renamed) {
-        const oldFile = await readFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`);
+        const oldFile = await readFileAsync(`models/api/${oldApiName}Model.js`);
         const oldModelInstantiation = `mongoose.model('${oldApiName}', `;
         const newModelInstantiation = `mongoose.model('${newApiName}', `;
         const replacedData = oldFile.toString().replace(oldModelInstantiation, newModelInstantiation);
@@ -226,7 +226,7 @@ exports.updateApi = async ctx => {
         if (JSON.stringify(oldFile) !== JSON.stringify(replacedData)) {
           await writeFileAsync(`models/api/${oldApiName}Model.js`, replacedData);
 
-          await renameFileAsync(`models/api/${oldApiName.toLowerCase()}Model.js`, `models/api/${newApiName.toLowerCase()}Model.js`);
+          await renameFileAsync(`models/api/${oldApiName}Model.js`, `models/api/${newApiName}Model.js`);
 
           // rename the redis key and save that value
           await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
@@ -270,11 +270,11 @@ exports.updateApi = async ctx => {
 };
 
 exports.deleteApi = async ctx => {
-  const apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name.toLowerCase();
   try {
     await redis.delete(redisPrefix + apiName);
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
-    const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
+    const model = require(`../../models/api/${apiName}Model.js`);
     if (api) {
       const deleted = model.collection.drop();
       if (deleted) {
@@ -294,8 +294,8 @@ exports.deleteApi = async ctx => {
 };
 
 exports.deleteApiData = async (ctx) => {
-  const apiName = ctx.params.api_name;
-  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
+  const apiName = ctx.params.api_name.toLowerCase();
+  const model = require(`../../models/api/${apiName}Model.js`);
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {
@@ -315,7 +315,7 @@ exports.deleteApiData = async (ctx) => {
 };
 
 exports.generateNewApiKeys = async (ctx) => {
-  const apiName = ctx.params.api_name;
+  const apiName = ctx.params.api_name.toLowerCase();
   const newApiKey = uuidv1();
   const newApiSecretKey = crypto.randomBytes(32).toString('hex');
 
