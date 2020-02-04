@@ -196,7 +196,6 @@ exports.updateApi = async ctx => {
       }
        
       const model = require(`../../models/api/${oldApiName.toLowerCase()}Model.js`); 
-      // const model = require(`../../models/api/${oldName}Model.js`);
 
       const apiData = await model.find({});
       let renamed;
@@ -295,8 +294,8 @@ exports.deleteApi = async ctx => {
 };
 
 exports.deleteApiData = async (ctx) => {
-  const apiName = ctx.params.api_name.toLowerCase();
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const apiName = ctx.params.api_name;
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
   try {
     const exists = await redis.get(redisPrefix + apiName);
     if (!exists) {

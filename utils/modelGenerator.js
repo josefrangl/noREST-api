@@ -25,7 +25,7 @@ exports.createModel = async (data) =>  {
   const txtExportModule = `module.exports = ${modelName};`;
 
   const model = txtImportMongoose + txtBeginModel + txtMiddleModel + txtEndModel + txtExportModule;
-  const modelPath = `models/api/${apiName}Model.js`;
+  const modelPath = `models/api/${apiName.toLowerCase()}Model.js`;
 
   writeFileAsync(modelPath, model, 'utf8', err => {
     // eslint-disable-next-line no-console

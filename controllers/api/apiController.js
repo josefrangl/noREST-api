@@ -12,8 +12,8 @@ const { promisify } = require('util');
 const unlinkAsync = promisify(fs.unlink); 
 
 exports.getAll = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const apiName = ctx.params.api_name;
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
 
   try {
     const results = await model.find({});
@@ -28,10 +28,10 @@ exports.getAll = async ctx => {
 };
 
 exports.getByFieldAndValue = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const field = ctx.params.field;
   const value = ctx.params.value;
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
 
   // get query param for db -> could be gt or lte or startswith etc
   let { match } = ctx.query;
@@ -65,9 +65,9 @@ exports.getByFieldAndValue = async ctx => {
 };
 
 exports.postData = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const data = ctx.request.body;
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
 
   try {
     const results = await model.create(data);
@@ -82,10 +82,10 @@ exports.postData = async ctx => {
 };
 
 exports.updateRecord = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const data = ctx.request.body;
   const recordId = ctx.params.id;
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
 
   try {
     const result = await model.findOneAndUpdate({ _id: recordId }, data, { new: true });
@@ -106,9 +106,9 @@ exports.updateRecord = async ctx => {
 
 
 exports.deleteRecord = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const recordId = ctx.params.id;
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
 
   try {
     const result = await model.findOneAndDelete({ _id: recordId });
@@ -130,7 +130,7 @@ exports.deleteRecord = async ctx => {
 
 exports.uploadFile = async ctx => {
   const apiName = ctx.params.api_name;
-  const model = require(`../../models/api/${apiName}Model.js`);
+  const model = require(`../../models/api/${apiName.toLowerCase()}Model.js`);
   const filePath = ctx.files[0].path;
 
   try {
