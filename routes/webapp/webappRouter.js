@@ -8,7 +8,7 @@ webappRouter.post('/webapp/signup', webappController.signup);
 webappRouter.post('/webapp/login', webappController.login);
 
 // edit/delete a user
-webappRouter.put('/webapp/user/edit/:email', webappController.editUser);
+webappRouter.put('/webapp/user/edit', webappController.editUser);
 webappRouter.delete('/webapp/user/:user_id', webappController.deleteUser);
 
 // if a user has forgotten their password

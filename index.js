@@ -18,11 +18,11 @@ require('./db/redis/redis');
 
 app.use(cors(options));
 app.use(
-  jwtVerify({ secret: process.env.JWT_SECRET }).unless({
-    path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z0-9\d]+/, /^\/logistics\/api\/verify/, /^\/logistics\/api\/[a-zA-Z0-9\d]+\/keys/,  /^\/logistics\/public/ ]
-  })
+  jwtVerify({ secret: process.env.JWT_SECRET })
+    .unless({
+      path: [/^\/webapp\/login/, /^\/webapp\/signup/, /^\/api\/[a-zA-Z0-9\d]+/, /^\/logistics\/api\/verify/, /^\/logistics\/api\/[a-zA-Z0-9\d]+\/keys/,  /^\/logistics\/public/ ]
+    })
 );
-
 app.use(bodyParser());
 app.use(router());
 
