@@ -12,7 +12,6 @@ client.on('connect', () => {
   console.log('💾: Redis is connected!!');
 });
 
-
 const db = {
   get: promisify(client.get).bind(client),
   set: promisify(client.set).bind(client),

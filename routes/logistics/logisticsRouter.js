@@ -9,9 +9,11 @@ logisticsRouter.post('/logistics/api/verify', logisticsController.verifyApiName)
 // generate new API keys
 logisticsRouter.get('/logistics/api/:api_name/keys', logisticsController.generateNewApiKeys);
 
-// gets all API details for all users and all public APIs
+// gets all API details for all users
 logisticsRouter.get('/logistics/admin/api', logisticsController.adminGetAllApi); // admin only
-logisticsRouter.get('/logistics/public', logisticsController.getPublicApis); // admin only
+
+// get all details for public APIs
+logisticsRouter.get('/logistics/public', logisticsController.getPublicApis);
 
 // gets all API details for all the APIs owned by a given user
 logisticsRouter.get('/logistics/api/user/:user_id', logisticsController.getUserApis);

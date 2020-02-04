@@ -16,6 +16,7 @@ const authenticateAccess = async (ctx, next) => {
     //keys from request
     const { api_key, api_secret_key } = ctx.request.headers;
 
+    // will only be authorised if they have the api keys or if it is a get request and the api is public
     if (public_status === 'true' && ctx.request.method === 'GET' || api_key === apiKey && api_secret_key === apiSecretKey) await next();
     else {
       ctx.body = { error: 'You do not have the right permissions to access this api.' };
