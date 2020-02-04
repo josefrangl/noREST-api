@@ -8,12 +8,16 @@ const ApiModel = require('../../models/logistics/logisticsModel');
 
 const redisPrefix = 'user-';
 
+
+// --- sign a user up:
+
 const signup = async (ctx) => {
   const { name, email, password } = ctx.request.body;
-  const saltRounds = 10; // move this to the env file
+  const saltRounds = process.env.SALT_ROUNDS;
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
   try {
+    // check if the user already exists
     const user = await redis.get(redisPrefix + email);
     if (user) {
       ctx.body = { error: 'This email is already registered.' };
@@ -27,9 +31,9 @@ const signup = async (ctx) => {
           password: hashPassword
         });
 
-        // Create JWT token
+        // create JWT token
         const responseUser = {
-          id: newUser._id, // correct?
+          id: newUser._id,
           email: newUser.email,
           name: newUser.name
         };
@@ -51,6 +55,9 @@ const signup = async (ctx) => {
   }
 };
 
+
+// --- login a user:
+
 const login = async (ctx) => {
   const { email, password } = ctx.request.body;
   try {
@@ -65,7 +72,7 @@ const login = async (ctx) => {
         ctx.status = 202;
       }
       else {
-        // Create JWT token
+        // create JWT token
         const mongoUser = await userModel.find({ email: email });
         const responseUser = {
           email,
@@ -85,8 +92,11 @@ const login = async (ctx) => {
   }
 };
 
+
+// --- edit a user ( name or password):
+
 const editUser = async (ctx) => {
-  const email = ctx.params.email;
+  const { email } = ctx.params;
   const { name, oldPassword, newPassword } = ctx.request.body;
   const hashOldPassword = await redis.get(redisPrefix + email);
   let hashNewPassword;
@@ -104,7 +114,7 @@ const editUser = async (ctx) => {
           ctx.status = 202;
         } 
         else {
-          const saltRounds = 10; // move this to the env file
+          const saltRounds = process.env.SALT_ROUNDS;
           hashNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
           // update redis password
@@ -128,10 +138,46 @@ const editUser = async (ctx) => {
   }
 };
 
+
+// --- to delete a user:
+
+const deleteUser = async (ctx) => {
+  const { user_id } = ctx.params;
+
+  try {
+    const { email } = await userModel.findOne({ _id: user_id });
+    const userApis = await ApiModel.find({ user: user_id });
+
+    // delete from mongoose
+    const deleted = await ApiModel.deleteMany({ user: user_id });
+    if (deleted) {
+
+      // delete from redis
+      // has to be map as promise all expects an array of promise and map returns an array whereas forEach will only iterate
+      await Promise.all(userApis.map(async (api) => {
+        await redis.delete('api-' + api.api_name);
+      }));
+      await ApiModel.deleteOne({ _id: user_id });
+      await redis.delete(redisPrefix + email);
+
+      ctx.body = deleted;
+      ctx.status = 201;
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log(`Error deleting user: ${user_id}.`, error);
+    ctx.body = { error: 'Error deleting user.' };
+    ctx.status = 503;
+  }
+};
+
+
+// --- if the user has forgotten their password:
+
 const forgotPassword = async (ctx) => {
-  const email = ctx.params.email;
+  const { email } = ctx.params;
   const newPassword = uuidv1();
-  const saltRounds = 10; // move this to the env file
+  const saltRounds = process.env.SALT_ROUNDS;
   const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
   const data = {
     password: newHashPassword
@@ -157,36 +203,6 @@ const forgotPassword = async (ctx) => {
     // eslint-disable-next-line no-console
     console.log(`Error resetting password for user: ${email}.`, error);
     ctx.body = { error: 'Error resetting password' };
-    ctx.status = 503;
-  }
-};
-
-const deleteUser = async (ctx) => {
-  const id = ctx.params.user_id;
-
-  try {
-    const { email } = await userModel.findOne({ _id: id });
-    const userApis = await ApiModel.find({ user: id });
-
-    // delete from mongoose
-    const deleted = await ApiModel.deleteMany({ user: id });
-    if (deleted) {
-
-      // delete from redis
-      // has to be map as promise all expects an array of promise and map returns an array whereas forEach will only iterate
-      await Promise.all(userApis.map(async (api) => {
-        await redis.delete('api-' + api.api_name);
-      }));
-      await ApiModel.deleteOne({ _id: id });
-      await redis.delete(redisPrefix + email);
-
-      ctx.body = deleted;
-      ctx.status = 201;
-    }
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`Error deleting user: ${id}.`, error);
-    ctx.body = { error: 'Error deleting user.' };
     ctx.status = 503;
   }
 };

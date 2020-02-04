@@ -3,3 +3,4 @@ test
 models/api/*
 .DS_Store
 uploads/*
+.env

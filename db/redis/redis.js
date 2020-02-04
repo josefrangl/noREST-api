@@ -3,7 +3,7 @@
 const redis = require('redis');
 const { promisify } = require('util');
 
-const redisUrl = process.env.REDIS_URL || '';
+const redisUrl = process.env.REDIS_URL;
 
 const client = redis.createClient(redisUrl);
 
@@ -11,7 +11,6 @@ client.on('connect', () => {
   // eslint-disable-next-line no-console
   console.log('💾: Redis is connected!!');
 });
-
 
 const db = {
   get: promisify(client.get).bind(client),

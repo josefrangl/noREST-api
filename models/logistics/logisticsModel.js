@@ -15,7 +15,7 @@ const ApiModel = mongoose.model('apis', {
     default: false
   },
   user: {
-    type: String, // maybe int? check up
+    type: String,
     allowNull: false,
   },
   api_key: {

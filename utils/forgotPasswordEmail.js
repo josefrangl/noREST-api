@@ -18,7 +18,7 @@ const sendMail = async (name, email, newPassword) => {
     from: 'noRest@noRest.com',
     to: email,
     subject: 'noRest: Reset Forgotten Password',
-    text: `Hi ${name}! 
+    text: `Hi ${name[0].toUpperCase() + name.slice(1)}! 
     
     It seems that you've forgotten your password. No worries, we've reset it for you - the next time you login please use the following password:
 
