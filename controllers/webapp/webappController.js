@@ -10,7 +10,7 @@ const redisPrefix = 'user-';
 
 const signup = async (ctx) => {
   const { name, email, password } = ctx.request.body;
-  const saltRounds = 10; // move this to the env file
+  const saltRounds = process.env.SALT_ROUNDS; // move this to the env file
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
   try {
@@ -104,7 +104,7 @@ const editUser = async (ctx) => {
           ctx.status = 202;
         } 
         else {
-          const saltRounds = 10; // move this to the env file
+          const saltRounds = process.env.SALT_ROUNDS;
           hashNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
           // update redis password
@@ -131,7 +131,7 @@ const editUser = async (ctx) => {
 const forgotPassword = async (ctx) => {
   const { email } = ctx.params;
   const newPassword = uuidv1();
-  const saltRounds = 10; // move this to the env file
+  const saltRounds = process.env.SALT_ROUNDS;
   const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
   const data = {
     password: newHashPassword
