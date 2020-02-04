@@ -86,7 +86,7 @@ const login = async (ctx) => {
 };
 
 const editUser = async (ctx) => {
-  const email = ctx.params.email;
+  const { email } = ctx.params;
   const { name, oldPassword, newPassword } = ctx.request.body;
   const hashOldPassword = await redis.get(redisPrefix + email);
   let hashNewPassword;
@@ -129,7 +129,7 @@ const editUser = async (ctx) => {
 };
 
 const forgotPassword = async (ctx) => {
-  const email = ctx.params.email;
+  const { email } = ctx.params;
   const newPassword = uuidv1();
   const saltRounds = 10; // move this to the env file
   const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
@@ -162,14 +162,14 @@ const forgotPassword = async (ctx) => {
 };
 
 const deleteUser = async (ctx) => {
-  const id = ctx.params.user_id;
+  const { user_id } = ctx.params;
 
   try {
-    const { email } = await userModel.findOne({ _id: id });
-    const userApis = await ApiModel.find({ user: id });
+    const { email } = await userModel.findOne({ _id: user_id });
+    const userApis = await ApiModel.find({ user: user_id });
 
     // delete from mongoose
-    const deleted = await ApiModel.deleteMany({ user: id });
+    const deleted = await ApiModel.deleteMany({ user: user_id });
     if (deleted) {
 
       // delete from redis
@@ -177,7 +177,7 @@ const deleteUser = async (ctx) => {
       await Promise.all(userApis.map(async (api) => {
         await redis.delete('api-' + api.api_name);
       }));
-      await ApiModel.deleteOne({ _id: id });
+      await ApiModel.deleteOne({ _id: user_id });
       await redis.delete(redisPrefix + email);
 
       ctx.body = deleted;
@@ -185,7 +185,7 @@ const deleteUser = async (ctx) => {
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(`Error deleting user: ${id}.`, error);
+    console.log(`Error deleting user: ${user_id}.`, error);
     ctx.body = { error: 'Error deleting user.' };
     ctx.status = 503;
   }

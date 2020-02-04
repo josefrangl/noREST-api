@@ -134,10 +134,10 @@ exports.getApi = async ctx => {
 };
 
 exports.getUserApis = async ctx => {
-  const userId = ctx.params.user_id;
+  const { user_id } = ctx.params.user_id;
 
   try {
-    const userApis = await ApiModel.find({ user: userId });
+    const userApis = await ApiModel.find({ user: user_id });
     ctx.status = 200;
     if (userApis) {
       ctx.body = userApis;
@@ -235,7 +235,6 @@ exports.updateApi = async ctx => {
           ctx.body = { error: 'Could not update mongoose model.' }; // perhaps could validate this in the front end with the api/validate endpoint?
           return ctx.status = 202;
         }
-
       }
     }
 

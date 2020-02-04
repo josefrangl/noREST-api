@@ -1,5 +1,5 @@
 const fs = require('fs');
-const {promisify} = require('util');
+const { promisify } = require('util');
 const writeFileAsync = promisify(fs.writeFile);
 
 exports.createModel = async (data) =>  {
