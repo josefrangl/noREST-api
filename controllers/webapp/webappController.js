@@ -98,7 +98,6 @@ const login = async (ctx) => {
 // --- edit a user ( name or password):
 
 const editUser = async (ctx) => {
-
   const { email } = ctx.state.user;
   const { name, oldPassword, newPassword } = ctx.request.body;
   const hashOldPassword = await redis.get(redisPrefix + email);
@@ -150,7 +149,7 @@ const editUser = async (ctx) => {
 // --- to delete a user:
 
 const deleteUser = async (ctx) => {
-  const id = ctx.params.user_id;
+  const { id } = ctx.state.user;
 
   try {
     const { email } = await userModel.findOne({ _id: id });
