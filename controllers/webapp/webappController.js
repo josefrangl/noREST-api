@@ -13,7 +13,7 @@ const redisPrefix = 'user-';
 
 const signup = async (ctx) => {
   const { name, email, password } = ctx.request.body;
-  const saltRounds = process.env.SALT_ROUNDS;
+  const saltRounds = parseInt(process.env.SALT_ROUNDS);
   const hashPassword = await bcrypt.hash(password, saltRounds);
 
   try {
@@ -30,6 +30,8 @@ const signup = async (ctx) => {
           email: email,
           password: hashPassword
         });
+
+        console.log(newUser);
 
         // create JWT token
         const responseUser = {
@@ -114,7 +116,7 @@ const editUser = async (ctx) => {
           ctx.status = 202;
         } 
         else {
-          const saltRounds = process.env.SALT_ROUNDS;
+          const saltRounds = parseInt(process.env.SALT_ROUNDS);
           hashNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
           // update redis password
@@ -142,30 +144,39 @@ const editUser = async (ctx) => {
 // --- to delete a user:
 
 const deleteUser = async (ctx) => {
-  const { user_id } = ctx.params;
+  const id = ctx.params.user_id;
 
   try {
-    const { email } = await userModel.findOne({ _id: user_id });
-    const userApis = await ApiModel.find({ user: user_id });
+    const { email } = await userModel.findOne({ _id: id });
+    const userApis = await ApiModel.find({ user: id });
 
-    // delete from mongoose
-    const deleted = await ApiModel.deleteMany({ user: user_id });
+    // delete from our mongoose api db
+    const deleted = await ApiModel.deleteMany({ user: id });
     if (deleted) {
-
-      // delete from redis
+      
+      // delete all their APIs from redis
       // has to be map as promise all expects an array of promise and map returns an array whereas forEach will only iterate
       await Promise.all(userApis.map(async (api) => {
         await redis.delete('api-' + api.api_name);
       }));
-      await ApiModel.deleteOne({ _id: user_id });
+
+      // delete from our mongoose user db
+      await userModel.deleteOne({ _id: id });
+
+      // delete their user in redis
       await redis.delete(redisPrefix + email);
+
+      await Promise.all(userApis.map(async (api) => {
+        const model = require(`../../models/api/${api.api_name.toLowerCase()}Model.js`);
+        await model.collection.drop();
+      }));
 
       ctx.body = deleted;
       ctx.status = 201;
     }
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log(`Error deleting user: ${user_id}.`, error);
+    console.log(`Error deleting user: ${id}.`, error);
     ctx.body = { error: 'Error deleting user.' };
     ctx.status = 503;
   }
@@ -177,7 +188,7 @@ const deleteUser = async (ctx) => {
 const forgotPassword = async (ctx) => {
   const { email } = ctx.params;
   const newPassword = uuidv1();
-  const saltRounds = process.env.SALT_ROUNDS;
+  const saltRounds = parseInt(process.env.SALT_ROUNDS);
   const newHashPassword = await bcrypt.hash(newPassword, saltRounds);
   const data = {
     password: newHashPassword
