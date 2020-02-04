@@ -3,7 +3,7 @@
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
-const url = process.env.MONGODB_URI || 'mongodb://localhost:27017/norest';
+const url = process.env.MONGODB_URI;
 
 const connectionOptions = { 
   useNewUrlParser: true, 
