@@ -118,13 +118,14 @@ exports.getPublicApis = async (ctx) => {
 // --- gets the details for all the apis owned by one user:
 
 exports.getUserApis = async ctx => {
-  const { user_id } = ctx.params.user_id;
+  
+  const user_id = ctx.params.user_id;
 
   try {
     const userApis = await ApiModel.find({ user: user_id });
-    ctx.status = 200;
     if (userApis) {
       ctx.body = userApis;
+      ctx.status = 200;
     } else {
       ctx.body = { error: 'No APIs found for that user.' };
       ctx.status = 204;
