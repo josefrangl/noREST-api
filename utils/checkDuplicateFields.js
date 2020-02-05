@@ -1,11 +1,16 @@
-// require apis model
 
 
-const checkDuplicateFields = async (data) => {
+const checkDuplicateFields = data => {
+
+  let fieldsArrCopy = [];
+
+  if (data.api_fields) {
+    fieldsArrCopy = data.api_fields.slice();
+  } else if (data.api.fields) {
+    fieldsArrCopy = data.api.fields.slice();
+  }
 
   const fieldsKeysArr = [];
-  const fieldsArrCopy = data.api.fields.slice();
-
   fieldsArrCopy.forEach(field => {
     fieldsKeysArr.push(field.field_name);
   });
@@ -16,9 +21,6 @@ const checkDuplicateFields = async (data) => {
   }
 
   return false;
-  // if duplicates return true
-  // else return false
-
 };
 
 module.exports = checkDuplicateFields;

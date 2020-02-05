@@ -182,7 +182,7 @@ exports.createApi = async ctx => {
 
   let pluralExists;
 
-  const duplicatedFields = await checkDuplicateFields(data);
+  const duplicatedFields = checkDuplicateFields(data);
 
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
@@ -244,28 +244,26 @@ exports.editApi = async ctx => {
   }
 
   // check for duplicate fields
-  const duplicatedFields = await checkDuplicateFields(data);
+  const duplicatedFields = checkDuplicateFields(data);
   if (duplicatedFields) {
     ctx.body = { error: 'Fields must be unique, no duplicates allowed.'};
     return ctx.status = 202;
   }
 
-  console.log('DATA IN EDIT API    :' , data);
-
   // update the api fields --> have to do it seperately as if data.api_fields = '', the old fields would be overwritten
   // haven't done it below to save doing 2 db calls
-  if (data.api_fields) {
-    let updatedFields;
-    if (data.api_fields.length === 1) {
-      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
-    } else {
-      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: { $each: data.api_fields }} }, { new: true });
-    }
-    if (updatedFields) {
-      ctx.body = updatedFields;
-      ctx.status = 200;
-    }
-  }
+  // if (data.api_fields) {
+  //   let updatedFields;
+  //   if (data.api_fields.length === 1) {
+  //     updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
+  //   } else {
+  //     updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: { $each: data.api_fields }} }, { new: true });
+  //   }
+  //   if (updatedFields) {
+  //     ctx.body = updatedFields;
+  //     ctx.status = 200;
+  //   }
+  // }
 
   const newApiName = data.api_name;
 
@@ -336,7 +334,7 @@ exports.editApi = async ctx => {
     // create object for mongoose with updated values
     let mongooseObj = {};
     for (let key in data) {
-      if (data[key] !== '' && key !== 'api_fields') mongooseObj[key] = data[key];
+      if (data[key] !== '') mongooseObj[key] = data[key];
     }
 
     // update the mongoose model fields
