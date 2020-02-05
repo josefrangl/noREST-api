@@ -13,6 +13,7 @@ const createModel = require('../../utils/modelGenerator').createModel;
 
 const ApiModel = require('../../models/logistics/logisticsModel');
 const redis = require('../../db/redis/redis');
+const checkDuplicateFields = require('../../utils/checkDuplicateFields');
 
 const redisPrefix = 'api-';
 
@@ -172,7 +173,7 @@ exports.createApi = async ctx => {
 
   if (!data.user || !apiName || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = { error: 'Check your input, one field is missing.' };
-    ctx.status = 202;
+    return ctx.status = 202;
   }
 
   // generate api access keys
@@ -180,6 +181,8 @@ exports.createApi = async ctx => {
   const apiSecretKey = crypto.randomBytes(32).toString('hex');
 
   let pluralExists;
+
+  const duplicatedFields = await checkDuplicateFields(data);
 
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
@@ -199,6 +202,9 @@ exports.createApi = async ctx => {
     } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) {
       ctx.body = { error: 'Please choose a valid name for your api.' };
       ctx.status = 202; // change back to 400 when front end validation done
+    } else if (duplicatedFields) {
+      ctx.body = { error: 'Fields must be unique, no duplicates allowed.'};
+      return ctx.status = 202;
     } else {
       await createModel(data);
       const redisApi = await redis.set(redisPrefix + apiName.toLowerCase(), `${data.api.public}:${apiKey}:${apiSecretKey}`);
@@ -213,6 +219,7 @@ exports.createApi = async ctx => {
           api_fields: data.api.fields
         });
 
+        api.api_name = data.api.name;
         ctx.body = api;
         ctx.status = 201;
       }
@@ -226,7 +233,7 @@ exports.createApi = async ctx => {
 };
 
 
-// --- update an the name, description, public status or fields of an API:
+// --- update the name, description, public status or fields of an API:
 
 
 exports.editApi = async ctx => {
@@ -240,6 +247,15 @@ exports.editApi = async ctx => {
     ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 202;
   }
+
+  // check for duplicate fields
+  const duplicatedFields = await checkDuplicateFields(data);
+  if (duplicatedFields) {
+    ctx.body = { error: 'Fields must be unique, no duplicates allowed.'};
+    return ctx.status = 202;
+  }
+
+  console.log('DATA IN EDIT API    :' , data);
 
   // update the api fields --> have to do it seperately as if data.api_fields = '', the old fields would be overwritten
   // haven't done it below to save doing 2 db calls
