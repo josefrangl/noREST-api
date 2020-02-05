@@ -16,7 +16,7 @@ const ApiModel = require('../../models/logistics/logisticsModel');
 // --- get all entries for an API:
 
 exports.getAll = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const model = require(`../../models/api/${apiName}Model.js`);
 
   try {
@@ -35,7 +35,7 @@ exports.getAll = async ctx => {
 // --- get whole API that has a certain field and value:
 
 exports.getByFieldAndValue = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const field = ctx.params.field;
   const value = ctx.params.value;
   const model = require(`../../models/api/${apiName}Model.js`);
@@ -76,7 +76,7 @@ exports.getByFieldAndValue = async ctx => {
 // --- populate the database with data (can take an obj OR an array):
 
 exports.postData = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const data = ctx.request.body;
   const model = require(`../../models/api/${apiName}Model.js`);
   let rows = 0;
@@ -108,7 +108,7 @@ exports.postData = async ctx => {
 // --- populate the database with a csv file:
 
 exports.uploadFile = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const model = require(`../../models/api/${apiName}Model.js`);
   let rows = 0;
 
@@ -150,7 +150,7 @@ exports.uploadFile = async ctx => {
 // --- to update a document(row):
 
 exports.updateRecord = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const data = ctx.request.body;
   const recordId = ctx.params.id;
   const model = require(`../../models/api/${apiName}Model.js`);
@@ -176,7 +176,7 @@ exports.updateRecord = async ctx => {
 // --- delete a document(row):
 
 exports.deleteRecord = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const recordId = ctx.params.id;
   const model = require(`../../models/api/${apiName}Model.js`);
 
