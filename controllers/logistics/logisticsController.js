@@ -1,3 +1,5 @@
+// all API names will be saved in lowercase in the redis database to align with the lowercase collection names in mongoose
+
 const uuidv1 = require('uuid/v1');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -21,7 +23,7 @@ const forbiddenNames = ['api', 'apis', 'user', 'users', 'break', 'case', 'catch'
 // --- verify if an api name already exists:
 
 exports.verifyApiName = async ctx => {
-  const apiName = ctx.request.body.name.toLowerCase();
+  const apiName = ctx.request.body.name;
   let pluralExists;
 
   if (!apiName) {
@@ -33,7 +35,7 @@ exports.verifyApiName = async ctx => {
     ctx.body = { error: 'Please choose a valid name for your api.' };
     ctx.status = 202; 
   }
-  const exists = await redis.get(redisPrefix + apiName);
+  const exists = await redis.get(redisPrefix + apiName.toLowerCase());
   // make sure that a name is not the plural of another as mongoose will add an s to when naming the collection
   if (apiName[apiName.length - 1] === 's') {
     pluralExists = await redis.get(redisPrefix + apiName.slice(-1));
@@ -51,7 +53,7 @@ exports.verifyApiName = async ctx => {
 // --- generate new API keys:
 
 exports.generateNewApiKeys = async (ctx) => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const newApiKey = uuidv1();
   const newApiSecretKey = crypto.randomBytes(32).toString('hex');
 
@@ -61,13 +63,13 @@ exports.generateNewApiKeys = async (ctx) => {
   };
 
   try {
-    const redisName = await redis.get(redisPrefix + apiName);
+    const redisName = await redis.get(redisPrefix + apiName.toLowerCase());
     if (!redisName) {
       ctx.body = { error: `No APIs found with name: ${apiName}.` };
       ctx.status = 202;
     } else {
       const oldPublic = redisName.split(':')[0];
-      await redis.set(redisPrefix + apiName, `${oldPublic}:${newApiKey}:${newApiSecretKey}`);
+      await redis.set(redisPrefix + apiName.toLowerCase(), `${oldPublic}:${newApiKey}:${newApiSecretKey}`);
       const result = await ApiModel.findOneAndUpdate({ api_name: apiName }, keysObj, { new: true });
       ctx.body = result;
       ctx.status = 200;
@@ -141,9 +143,9 @@ exports.getUserApis = async ctx => {
 // --- get's the details for one API:
 
 exports.getApi = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   try {
-    const exists = await redis.get(redisPrefix + apiName);
+    const exists = await redis.get(redisPrefix + apiName.toLowerCase());
     if (!exists) {
       ctx.body = { error: `No APIs found with name: ${apiName}.` };
       ctx.status = 202;
@@ -166,7 +168,7 @@ exports.getApi = async ctx => {
 exports.createApi = async ctx => {
 
   const data = ctx.request.body;
-  const apiName = data.api.name.toLowerCase();
+  const apiName = data.api.name;
 
   if (!data.user || !apiName || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = { error: 'Check your input, one field is missing.' };
@@ -181,7 +183,7 @@ exports.createApi = async ctx => {
 
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
-    const exists = await redis.get(redisPrefix + apiName);
+    const exists = await redis.get(redisPrefix + apiName.toLowerCase());
     
     if (apiName[apiName.length - 1] === 's') {
       pluralExists = await redis.get(redisPrefix + apiName.slice(0, -1));
@@ -194,7 +196,7 @@ exports.createApi = async ctx => {
       ctx.status = 202; // change back to 400 when front end validation done
     } else {
       await createModel(data);
-      const redisApi = await redis.set(redisPrefix + apiName, `${data.api.public}:${apiKey}:${apiSecretKey}`);
+      const redisApi = await redis.set(redisPrefix + apiName.toLowerCase(), `${data.api.public}:${apiKey}:${apiSecretKey}`);
       if (redisApi) {
         const api = await ApiModel.create({
           api_name: apiName,
@@ -222,11 +224,11 @@ exports.createApi = async ctx => {
 // --- update an the name, description, public status or fields of an API:
 
 exports.updateApi = async ctx => {
-  const oldApiName = ctx.params.api_name.toLowerCase();
+  const oldApiName = ctx.params.api_name;
   const data = ctx.request.body;
 
   // check that the api exists
-  const oldName = await redis.get(redisPrefix + oldApiName);
+  const oldName = await redis.get(redisPrefix + oldApiName.toLowerCase());
   if (!oldName) {
     ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 202;
@@ -247,16 +249,18 @@ exports.updateApi = async ctx => {
     }
   }
 
-  const newApiName = data.api_name.toLowerCase();
+  const newApiName = data.api_name;
 
   // save the apiName that is being used in redis, to later be able to overwrite it if newApiName exists
-  let redisName = oldName;
+  let redisName = redisPrefix + oldName.toLowerCase();
+  let newRedisName = redisPrefix + newApiName.toLowerCase();
   try {
     // if the client wants to change the api name
     if (newApiName) {
-      // to check if the new api name is already being used
-      const newNameExists = await redis.get(redisPrefix + newApiName);
-      if (newNameExists) { // or plural exists
+      // to check if the new api name or its plural is already being used
+      const newNameExists = await redis.get(newRedisName);
+      const newPluralNameExists = await redis.get(newRedisName + 's');
+      if (newNameExists || newPluralNameExists) { // or plural exists
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 202;
       }
@@ -292,8 +296,8 @@ exports.updateApi = async ctx => {
           await renameFileAsync(`models/api/${oldApiName}Model.js`, `models/api/${newApiName}Model.js`);
 
           // rename the redis key and save that value
-          await redis.rename(redisPrefix + oldApiName, redisPrefix + newApiName);
-          redisName = redisPrefix + newApiName;
+          await redis.rename(redisName, newRedisName);
+          redisName = newRedisName;
         } else {
           ctx.body = { error: 'Could not update mongoose model.' };
           return ctx.status = 202;
@@ -339,11 +343,11 @@ exports.updateApi = async ctx => {
 // --- delete a whole API
 
 exports.deleteApi = async ctx => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   try {
 
     // delete from redis
-    await redis.delete(redisPrefix + apiName);
+    await redis.delete(redisPrefix + apiName.toLowerCase());
 
     // delete from our mongoose db
     const api = await ApiModel.findOneAndDelete({ api_name: apiName });
@@ -372,10 +376,10 @@ exports.deleteApi = async ctx => {
 // --- to delete all the data inside an API:
 
 exports.deleteApiData = async (ctx) => {
-  const apiName = ctx.params.api_name.toLowerCase();
+  const apiName = ctx.params.api_name;
   const model = require(`../../models/api/${apiName}Model.js`);
   try {
-    const exists = await redis.get(redisPrefix + apiName);
+    const exists = await redis.get(redisPrefix + apiName.toLowerCase());
     if (!exists) {
       ctx.body = { error: `No APIs found with name: ${apiName}.` };
       ctx.status = 202;
