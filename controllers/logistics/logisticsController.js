@@ -381,8 +381,11 @@ exports.deleteApiData = async (ctx) => {
       ctx.status = 202;
     } else {
       const deleted = await model.deleteMany({});
-      ctx.body = deleted;
-      ctx.status = 200;
+      if (deleted) {
+        await ApiModel.findOneAndUpdate({ api_name: apiName }, { api_row_count: 0 });
+        ctx.body = deleted;
+        ctx.status = 200;
+      }
     }
   } catch (error) {
     // eslint-disable-next-line no-console
