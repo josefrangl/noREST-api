@@ -24,8 +24,7 @@ exports.getAll = async ctx => {
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`Error in getting all values from DB for: ${apiName} API`, error);
+    console.error(`Error in getting all values from DB for: ${apiName} API`, error);
     ctx.body = { error: `Error in getting all values from DB for: ${apiName} API` };
     ctx.status = 500;
   }
@@ -65,8 +64,7 @@ exports.getByFieldAndValue = async ctx => {
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log(`Error in getting value by field from DB for: ${apiName} API`, error);
+    console.error(`Error in getting value by field from DB for: ${apiName} API`, error);
     ctx.body = { error: `Error in getting value by field from DB for: ${apiName} API` };
     ctx.status = 500;
   }
@@ -82,11 +80,8 @@ exports.postData = async ctx => {
   let rows = 0;
 
   // the number of documents that are to be inserted
-  if (Array.isArray(data)) {
-    rows = data.length;
-  } else {
-    rows = 1;
-  }
+  if (Array.isArray(data)) rows = data.length;
+  else rows = 1;
 
   try {
     const results = await model.create(data);
@@ -161,7 +156,7 @@ exports.updateRecord = async ctx => {
       ctx.body = result;
       ctx.status = 200;
     } else {
-      ctx.body = 'ID not found.';
+      ctx.body = { error: 'ID not found.' };
       ctx.status = 404;
     }
   } catch (error) {
@@ -187,7 +182,7 @@ exports.deleteRecord = async ctx => {
       ctx.body = result;
       ctx.status = 200;
     } else {
-      ctx.body = 'No record found with that ID.';
+      ctx.body = { error: 'No record found with that ID.' };
       ctx.status = 404;
     }
   } catch (error) {
