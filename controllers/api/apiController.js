@@ -10,6 +10,7 @@ const csvtojson = require('csvtojson');
 const fs = require('fs');
 const { promisify } = require('util');
 const unlinkAsync = promisify(fs.unlink); 
+const ApiModel = require('../../models/logistics/logisticsModel');
 
 
 // --- get all entries for an API:
@@ -78,11 +79,23 @@ exports.postData = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const data = ctx.request.body;
   const model = require(`../../models/api/${apiName}Model.js`);
+  let rows = 0;
+
+  // the number of documents that are to be inserted
+  if (Array.isArray(data)) {
+    rows = data.length;
+  } else {
+    rows = 1;
+  }
 
   try {
     const results = await model.create(data);
-    ctx.body = results;
-    ctx.status = 200;
+    if (results) {
+    // update the API details in our db with the number of rows
+      await ApiModel.findOneAndUpdate({ api_name: apiName }, { $inc: { api_row_count: rows } });
+      ctx.body = results;
+      ctx.status = 200;
+    }
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error inserting data into DB for: ${apiName} API`, error);
@@ -91,11 +104,13 @@ exports.postData = async ctx => {
   }
 };
 
+
 // --- populate the database with a csv file:
 
 exports.uploadFile = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const model = require(`../../models/api/${apiName}Model.js`);
+  let rows = 0;
 
   // get the file path that the multer middleware adds to ctx
   const filePath = ctx.files[0].path;
@@ -107,8 +122,10 @@ exports.uploadFile = async ctx => {
       const string = JSON.stringify(json);
       const replaced = string.replace('TRUE', 'true').replace('FALSE', 'false');
       const parsed = JSON.parse(replaced);
+      rows = json.length;
       const results = await model.create(parsed);
       if (results) {
+        await ApiModel.findOneAndUpdate({ api_name: apiName }, { $inc: { api_row_count: rows } });
         // delete file from our directory
         await unlinkAsync(filePath);
         ctx.body = results;
@@ -129,7 +146,8 @@ exports.uploadFile = async ctx => {
   }
 };
 
-// --- to be used in the future:
+
+// --- to update a document(row):
 
 exports.updateRecord = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
@@ -155,6 +173,8 @@ exports.updateRecord = async ctx => {
 };
 
 
+// --- delete a document(row):
+
 exports.deleteRecord = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const recordId = ctx.params.id;
@@ -163,6 +183,7 @@ exports.deleteRecord = async ctx => {
   try {
     const result = await model.findOneAndDelete({ _id: recordId });
     if (result) {
+      await ApiModel.findOneAndUpdate({ api_name: apiName }, { $inc: { api_row_count: -1 } });
       ctx.body = result;
       ctx.status = 200;
     } else {

@@ -47,6 +47,11 @@ const ApiModel = mongoose.model('apis', {
     }],
     allowNull: false
   },
+  api_row_count: {
+    type: Number,
+    allownull: false,
+    default: 0
+  },
   date_created: {
     type: Date,
     allownull: false,
