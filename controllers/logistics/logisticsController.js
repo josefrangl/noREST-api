@@ -13,6 +13,7 @@ const createModel = require('../../utils/modelGenerator').createModel;
 
 const ApiModel = require('../../models/logistics/logisticsModel');
 const redis = require('../../db/redis/redis');
+const checkDuplicateFields = require('../../utils/checkDuplicateFields');
 
 const redisPrefix = 'api-';
 
@@ -33,7 +34,7 @@ exports.verifyApiName = async ctx => {
     // make sure names are not keywrods/include a space/start with a number OR -
   } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) { // so that api names are valid javascript variables
     ctx.body = { error: 'Please choose a valid name for your api.' };
-    ctx.status = 202; 
+    ctx.status = 202;
   }
   const exists = await redis.get(redisPrefix + apiName.toLowerCase());
   // make sure that a name is not the plural of another as mongoose will add an s to when naming the collection
@@ -120,7 +121,7 @@ exports.getPublicApis = async (ctx) => {
 // --- gets the details for all the apis owned by one user:
 
 exports.getUserApis = async ctx => {
-  
+
   const user_id = ctx.params.user_id;
 
   try {
@@ -172,7 +173,7 @@ exports.createApi = async ctx => {
 
   if (!data.user || !apiName || !Object.prototype.hasOwnProperty.call(data.api, 'public') || data.api.fields.length < 1) {
     ctx.body = { error: 'Check your input, one field is missing.' };
-    ctx.status = 202;
+    return ctx.status = 202;
   }
 
   // generate api access keys
@@ -181,10 +182,12 @@ exports.createApi = async ctx => {
 
   let pluralExists;
 
+  const duplicatedFields = checkDuplicateFields(data);
+
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
     const exists = await redis.get(redisPrefix + apiName.toLowerCase());
-    
+
     if (apiName[apiName.length - 1] === 's') {
       pluralExists = await redis.get(redisPrefix + apiName.slice(0, -1));
     }
@@ -194,6 +197,9 @@ exports.createApi = async ctx => {
     } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) {
       ctx.body = { error: 'Please choose a valid name for your api.' };
       ctx.status = 202; // change back to 400 when front end validation done
+    } else if (duplicatedFields) {
+      ctx.body = { error: 'Fields must be unique, no duplicates allowed.'};
+      return ctx.status = 202;
     } else {
       await createModel(data);
       const redisApi = await redis.set(redisPrefix + apiName.toLowerCase(), `${data.api.public}:${apiKey}:${apiSecretKey}`);
@@ -208,6 +214,7 @@ exports.createApi = async ctx => {
           api_fields: data.api.fields
         });
 
+        api.api_name = data.api.name;
         ctx.body = api;
         ctx.status = 201;
       }
@@ -221,38 +228,47 @@ exports.createApi = async ctx => {
 };
 
 
-// --- update an the name, description, public status or fields of an API:
+// --- update the name, description, public status or fields of an API:
 
-exports.updateApi = async ctx => {
+
+exports.editApi = async ctx => {
+
   const oldApiName = ctx.params.api_name;
   const data = ctx.request.body;
 
   // check that the api exists
-  const oldName = await redis.get(redisPrefix + oldApiName.toLowerCase());
-  if (!oldName) {
+  const redisValue = await redis.get(redisPrefix + oldApiName.toLowerCase());
+  if (!redisValue) {
     ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
+    return ctx.status = 202;
+  }
+
+  // check for duplicate fields
+  const duplicatedFields = checkDuplicateFields(data);
+  if (duplicatedFields) {
+    ctx.body = { error: 'Fields must be unique, no duplicates allowed.'};
     return ctx.status = 202;
   }
 
   // update the api fields --> have to do it seperately as if data.api_fields = '', the old fields would be overwritten
   // haven't done it below to save doing 2 db calls
-  if (data.api_fields) {
-    let updatedFields;
-    if (data.api_fields.length === 1) {
-      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
-    } else {
-      updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: { $each: data.api_fields }} }, { new: true });
-    }
-    if (updatedFields) {
-      ctx.body = updatedFields;
-      ctx.status = 200;
-    }
-  }
+  // if (data.api_fields) {
+  //   let updatedFields;
+  //   if (data.api_fields.length === 1) {
+  //     updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: data.api_fields } }, { new: true });
+  //   } else {
+  //     updatedFields = await ApiModel.findOneAndUpdate({ api_name: oldApiName }, { $push: { api_fields: { $each: data.api_fields }} }, { new: true });
+  //   }
+  //   if (updatedFields) {
+  //     ctx.body = updatedFields;
+  //     ctx.status = 200;
+  //   }
+  // }
 
   const newApiName = data.api_name;
 
   // save the apiName that is being used in redis, to later be able to overwrite it if newApiName exists
-  let redisName = redisPrefix + oldName.toLowerCase();
+  let redisName = redisPrefix + oldApiName.toLowerCase();
   let newRedisName = redisPrefix + newApiName.toLowerCase();
   try {
     // if the client wants to change the api name
@@ -264,19 +280,19 @@ exports.updateApi = async ctx => {
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 202;
       }
-       
-      const model = require(`../../models/api/${oldApiName}Model.js`); 
+
+      const model = require(`../../models/api/${oldApiName}Model.js`);
       let renamed;
 
       // check if the model has already been created and has data
       const apiData = await model.find({});
       if (apiData.length > 0) {
         const db = mongoose.connection.db;
-      
-        let pluralOldApiName = oldApiName;
-        let pluralNewApiName = newApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
+
+        let pluralOldApiName = oldApiName.toLowerCase();
+        let pluralNewApiName = newApiName.toLowerCase(); // as model names are saved with an s so need to add an s if the api name doesn't end in one
         if (oldApiName[oldApiName.length - 1] !== 's' && !/[0-9]/.test(oldApiName[oldApiName.length - 1])) {
-  
+
           pluralOldApiName = oldApiName + 's';
           pluralNewApiName = newApiName + 's';
         }
@@ -287,8 +303,8 @@ exports.updateApi = async ctx => {
       // if the rename worked or the collection had no data in it, change the model name in the model file and rename the file itself
       if (apiData.length === 0 || renamed) {
         const oldFile = await readFileAsync(`models/api/${oldApiName}Model.js`);
-        const oldModelInstantiation = `mongoose.model('${oldApiName}', `;
-        const newModelInstantiation = `mongoose.model('${newApiName}', `;
+        const oldModelInstantiation = `mongoose.model('${oldApiName.toLowerCase()}', `;
+        const newModelInstantiation = `mongoose.model('${newApiName.toLowerCase()}', `;
         const replacedData = oldFile.toString().replace(oldModelInstantiation, newModelInstantiation);
 
         if (JSON.stringify(oldFile) !== JSON.stringify(replacedData)) {
@@ -306,8 +322,8 @@ exports.updateApi = async ctx => {
     }
 
     // to get the values saved in redis
-    const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
-  
+    const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
+
     // update the value associated with the (potentially updated) key in redis
     const newPublic = data.public || oldPublic;
     const newApiKey = data.api_key || oldApiKey;
@@ -318,7 +334,7 @@ exports.updateApi = async ctx => {
     // create object for mongoose with updated values
     let mongooseObj = {};
     for (let key in data) {
-      if (data[key] !== '' && key !== 'api_fields') mongooseObj[key] = data[key];
+      if (data[key] !== '') mongooseObj[key] = data[key];
     }
 
     // update the mongoose model fields
@@ -334,7 +350,7 @@ exports.updateApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error updating ${oldApiName} API to be ${newApiName}`, error);
-    ctx.body = { error: `Error udpating ${oldApiName} API to be ${newApiName}. Please check that your API has data.` };
+    ctx.body = { error: `Error udpating ${oldApiName} API to be ${newApiName}.` };
     ctx.status = 500;
   }
 };

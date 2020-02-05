@@ -23,7 +23,7 @@ logisticsRouter.get('/logistics/api/:api_name', logisticsController.getApi);
 
 // create, update, delete and delete the details for an API
 logisticsRouter.post('/logistics/api', logisticsController.createApi);
-logisticsRouter.put('/logistics/api/:api_name', logisticsController.updateApi);
+logisticsRouter.put('/logistics/api/:api_name', logisticsController.editApi);
 logisticsRouter.del('/logistics/api/:api_name', logisticsController.deleteApi);
 logisticsRouter.del('/logistics/data/api/:api_name', logisticsController.deleteApiData);
 
