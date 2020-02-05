@@ -186,13 +186,8 @@ exports.createApi = async ctx => {
 
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
-<<<<<<< HEAD
     const exists = await redis.get(redisPrefix + apiName.toLowerCase());
 
-=======
-    const exists = await redis.get(redisPrefix + apiName);
-
->>>>>>> updateApi controller name changed to editApi
     if (apiName[apiName.length - 1] === 's') {
       pluralExists = await redis.get(redisPrefix + apiName.slice(0, -1));
     }
