@@ -237,8 +237,8 @@ exports.editApi = async ctx => {
   const data = ctx.request.body;
 
   // check that the api exists
-  const oldName = await redis.get(redisPrefix + oldApiName.toLowerCase());
-  if (!oldName) {
+  const redisValue = await redis.get(redisPrefix + oldApiName.toLowerCase());
+  if (!redisValue) {
     ctx.body = { error: `There is no API with the name ${oldApiName}.`}; // perhaps could validate this in the front end with the api/validate endpoint?
     return ctx.status = 202;
   }
@@ -268,7 +268,7 @@ exports.editApi = async ctx => {
   const newApiName = data.api_name;
 
   // save the apiName that is being used in redis, to later be able to overwrite it if newApiName exists
-  let redisName = redisPrefix + oldName.toLowerCase();
+  let redisName = redisPrefix + oldApiName.toLowerCase();
   let newRedisName = redisPrefix + newApiName.toLowerCase();
   try {
     // if the client wants to change the api name
@@ -289,8 +289,8 @@ exports.editApi = async ctx => {
       if (apiData.length > 0) {
         const db = mongoose.connection.db;
 
-        let pluralOldApiName = oldApiName;
-        let pluralNewApiName = newApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
+        let pluralOldApiName = oldApiName.toLowerCase();
+        let pluralNewApiName = newApiName.toLowerCase(); // as model names are saved with an s so need to add an s if the api name doesn't end in one
         if (oldApiName[oldApiName.length - 1] !== 's' && !/[0-9]/.test(oldApiName[oldApiName.length - 1])) {
 
           pluralOldApiName = oldApiName + 's';
@@ -303,8 +303,8 @@ exports.editApi = async ctx => {
       // if the rename worked or the collection had no data in it, change the model name in the model file and rename the file itself
       if (apiData.length === 0 || renamed) {
         const oldFile = await readFileAsync(`models/api/${oldApiName}Model.js`);
-        const oldModelInstantiation = `mongoose.model('${oldApiName}', `;
-        const newModelInstantiation = `mongoose.model('${newApiName}', `;
+        const oldModelInstantiation = `mongoose.model('${oldApiName.toLowerCase()}', `;
+        const newModelInstantiation = `mongoose.model('${newApiName.toLowerCase()}', `;
         const replacedData = oldFile.toString().replace(oldModelInstantiation, newModelInstantiation);
 
         if (JSON.stringify(oldFile) !== JSON.stringify(replacedData)) {
@@ -322,7 +322,7 @@ exports.editApi = async ctx => {
     }
 
     // to get the values saved in redis
-    const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
+    const [oldPublic, oldApiKey, oldApiSecretKey] = redisValue.split(':');
 
     // update the value associated with the (potentially updated) key in redis
     const newPublic = data.public || oldPublic;
@@ -350,7 +350,7 @@ exports.editApi = async ctx => {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.log(`Error updating ${oldApiName} API to be ${newApiName}`, error);
-    ctx.body = { error: `Error udpating ${oldApiName} API to be ${newApiName}. Please check that your API has data.` };
+    ctx.body = { error: `Error udpating ${oldApiName} API to be ${newApiName}.` };
     ctx.status = 500;
   }
 };

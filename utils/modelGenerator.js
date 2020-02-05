@@ -4,6 +4,8 @@ const writeFileAsync = promisify(fs.writeFile);
 
 exports.createModel = async (data) =>  {
 
+  console.log('CREATING MODEL WITH DATA    :  ', data);
+
   const apiName = data.api.name;
   const modelName = apiName[0].toUpperCase() + apiName.slice(1).toLowerCase();
 
