@@ -10,6 +10,7 @@ const csvtojson = require('csvtojson');
 const fs = require('fs');
 const { promisify } = require('util');
 const unlinkAsync = promisify(fs.unlink); 
+const ApiModel = require('../../models/logistics/logisticsModel');
 
 
 // --- get all entries for an API:
@@ -78,9 +79,19 @@ exports.postData = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const data = ctx.request.body;
   const model = require(`../../models/api/${apiName}Model.js`);
+  let rows = 0;
+
+  if (Array.isArray(data)) {
+    rows = data.length;
+  } else {
+    rows = 1;
+  }
 
   try {
     const results = await model.create(data);
+
+    // update the API details in our db with the number of rows
+    await ApiModel.findOneAndUpdate({ api_name: apiName }, { $inc: { api_row_count: rows } });
     ctx.body = results;
     ctx.status = 200;
   } catch (error) {
@@ -91,11 +102,13 @@ exports.postData = async ctx => {
   }
 };
 
+
 // --- populate the database with a csv file:
 
 exports.uploadFile = async ctx => {
   const apiName = ctx.params.api_name.toLowerCase();
   const model = require(`../../models/api/${apiName}Model.js`);
+  let rows = 0;
 
   // get the file path that the multer middleware adds to ctx
   const filePath = ctx.files[0].path;
@@ -107,7 +120,9 @@ exports.uploadFile = async ctx => {
       const string = JSON.stringify(json);
       const replaced = string.replace('TRUE', 'true').replace('FALSE', 'false');
       const parsed = JSON.parse(replaced);
+      rows = json.length;
       const results = await model.create(parsed);
+      await ApiModel.findOneAndUpdate({ api_name: apiName }, { $inc: { api_row_count: rows } });
       if (results) {
         // delete file from our directory
         await unlinkAsync(filePath);

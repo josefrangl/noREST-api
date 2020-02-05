@@ -31,7 +31,6 @@ const signup = async (ctx) => {
           password: hashPassword
         });
 
-        console.log(newUser);
 
         // create JWT token
         const responseUser = {
