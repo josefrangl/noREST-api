@@ -33,7 +33,7 @@ exports.verifyApiName = async ctx => {
     // make sure names are not keywrods/include a space/start with a number OR -
   } else if (forbiddenNames.includes(apiName) || apiName[0] === '-' || apiName.includes(' ') || /[0-9]/.test(apiName[0])) { // so that api names are valid javascript variables
     ctx.body = { error: 'Please choose a valid name for your api.' };
-    ctx.status = 202; 
+    ctx.status = 202;
   }
   const exists = await redis.get(redisPrefix + apiName.toLowerCase());
   // make sure that a name is not the plural of another as mongoose will add an s to when naming the collection
@@ -120,7 +120,7 @@ exports.getPublicApis = async (ctx) => {
 // --- gets the details for all the apis owned by one user:
 
 exports.getUserApis = async ctx => {
-  
+
   const user_id = ctx.params.user_id;
 
   try {
@@ -183,8 +183,13 @@ exports.createApi = async ctx => {
 
   try {
     // make sure that a name nor it's plural exists as mongoose will add an s to when naming the collection and will overwrite already saved values
+<<<<<<< HEAD
     const exists = await redis.get(redisPrefix + apiName.toLowerCase());
-    
+
+=======
+    const exists = await redis.get(redisPrefix + apiName);
+
+>>>>>>> updateApi controller name changed to editApi
     if (apiName[apiName.length - 1] === 's') {
       pluralExists = await redis.get(redisPrefix + apiName.slice(0, -1));
     }
@@ -223,7 +228,9 @@ exports.createApi = async ctx => {
 
 // --- update an the name, description, public status or fields of an API:
 
-exports.updateApi = async ctx => {
+
+exports.editApi = async ctx => {
+
   const oldApiName = ctx.params.api_name;
   const data = ctx.request.body;
 
@@ -264,19 +271,19 @@ exports.updateApi = async ctx => {
         ctx.body = { error: 'An api with this name already exists.'}; // perhaps could validate this in the front end with the api/validate endpoint?
         return ctx.status = 202;
       }
-       
-      const model = require(`../../models/api/${oldApiName}Model.js`); 
+
+      const model = require(`../../models/api/${oldApiName}Model.js`);
       let renamed;
 
       // check if the model has already been created and has data
       const apiData = await model.find({});
       if (apiData.length > 0) {
         const db = mongoose.connection.db;
-      
+
         let pluralOldApiName = oldApiName;
         let pluralNewApiName = newApiName; // as model names are saved with an s so need to add an s if the api name doesn't end in one
         if (oldApiName[oldApiName.length - 1] !== 's' && !/[0-9]/.test(oldApiName[oldApiName.length - 1])) {
-  
+
           pluralOldApiName = oldApiName + 's';
           pluralNewApiName = newApiName + 's';
         }
@@ -307,7 +314,7 @@ exports.updateApi = async ctx => {
 
     // to get the values saved in redis
     const [oldPublic, oldApiKey, oldApiSecretKey] = oldName.split(':');
-  
+
     // update the value associated with the (potentially updated) key in redis
     const newPublic = data.public || oldPublic;
     const newApiKey = data.api_key || oldApiKey;
