@@ -12,14 +12,6 @@ This is the back-end repository. The front end repository can be found at: https
 ![noREST API Details Page](images/API-details.png)
 ![noREST Post API Page](images/API-post.png)
 
-<p align="center">
-  <img src="" alt="noREST Create API Page">
-</p>
-
-<p align="right">
-  <img src="" alt="noREST Create API Page">
-</p>
-
 ## Getting Started
 
 1. Clone the repository:
