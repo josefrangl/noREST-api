@@ -8,7 +8,17 @@ This is the back-end repository. The front end repository can be found at: https
 
 ## Screenshots
 
-// let's add something here
+![noREST Create API Page](images/API-create.png)
+![noREST API Details Page](images/API-details.png)
+![noREST Post API Page](images/API-post.png)
+
+<p align="center">
+  <img src="" alt="noREST Create API Page">
+</p>
+
+<p align="right">
+  <img src="" alt="noREST Create API Page">
+</p>
 
 ## Getting Started
 
