@@ -6,11 +6,8 @@ noRest is a service platform that lets you create a comprehensive no-code API in
 
 This is the back-end repository. The front end repository can be found at: https://github.com/stevelagarto/noREST-Front-End
 
-## Screenshots
-
 ![noREST Create API Page](images/API-create.png)
-![noREST API Details Page](images/API-details.png)
-![noREST Post API Page](images/API-post.png)
+
 
 ## Getting Started
 
