@@ -27,10 +27,11 @@ npm run devstart
 
 ## Tech Stack
 
-- [Node.js](https://reactjs.org/)
-- [Koa.js](https://www.typescriptlang.org/)
-- [MongoDB](https://reactjs.org/)
-- [Redis](https://www.typescriptlang.org/)
+- [Node.js](https://nodejs.org/en/)
+- [Koa.js](https://koajs.com/)
+- [Mongoose](https://mongoosejs.com/)
+- [MongoDB](https://www.mongodb.com/)
+- [Redis](https://redis.io/)
 
 ## Contributing
 
@@ -42,10 +43,10 @@ Thank you in advance!
 
 ## Team
 
-- Steven Becker Santos > [Github](https://github.com/stevelagarto) | tbc..
-- Alan Douglas > [Github](https://github.com/alandouglas96) | [LinkedIn](https://www.linkedin.com/in/alan-douglas-aranda-824a3481/)
-- Ellie Fairholm > [Github](https://github.com/elliefairholm) | [LinkedIn](https://www.linkedin.com/in/elliefairholm/)
-- Jose Fran Garcia > [Github](https://github.com/josefrangl) | [LinkedIn](https://www.linkedin.com/in/josefrangl/)
+- Steven Becker Santos - [github](https://github.com/stevelagarto) | tbc..
+- Alan Douglas - [github](https://github.com/alandouglas96) | [linkedIn](https://www.linkedin.com/in/alan-douglas-aranda-824a3481/)
+- Ellie Fairholm - [github](https://github.com/elliefairholm) | [linkedIn](https://www.linkedin.com/in/elliefairholm/)
+- Jose Fran Garcia - [github](https://github.com/josefrangl) | [linkedIn](https://www.linkedin.com/in/josefrangl/)
 
 ## License
 
