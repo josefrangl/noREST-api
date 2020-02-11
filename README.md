@@ -1,6 +1,4 @@
-<p align="center">
-  let's find a logo
-</p>
+# noRest
 
 noRest is a service platform that lets you create a comprehensive no-code API in minutes. Using our server, client's can create an exentisive database within minutes and use their personalised endpoint in their own front-end projects.
 
