@@ -40,7 +40,7 @@ Thank you in advance!
 
 ## Team
 
-- Steven Becker Santos - [github](https://github.com/stevelagarto) | tbc..
+- Steven Becker Santos - [github](https://github.com/stevelagarto) | [linkedIn] https://www.linkedin.com/in/steven-becker-santos-9985961a1/
 - Alan Douglas - [github](https://github.com/alandouglas96) | [linkedIn](https://www.linkedin.com/in/alan-douglas-aranda-824a3481/)
 - Ellie Fairholm - [github](https://github.com/elliefairholm) | [linkedIn](https://www.linkedin.com/in/elliefairholm/)
 - Jose Fran Garcia - [github](https://github.com/josefrangl) | [linkedIn](https://www.linkedin.com/in/josefrangl/)
